@@ -16,9 +16,12 @@ int Parser::parseLhs() {
   }
 
   Token b = lex->peek();
+  /*
   switch (b.type()) {
 
   }
+  */
+  return PARSE_OK;
 }
 
 int Parser::parseExpression() {

@@ -28,7 +28,7 @@ int main(int /*argc*/, char* /*argv[]*/)
   l.lex(code);
 
   Parser p;
-  p.parse(l);
+  p.parse(&l);
 
   l.dump();
 
