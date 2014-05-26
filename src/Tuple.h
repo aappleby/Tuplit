@@ -1,40 +1,52 @@
 #pragma once
 #include "Atom.h"
 
-struct Tuple {
+// Wrapper object around a block of atoms, does _not_ own the atoms.
 
-  Tuple(int size) {
-    head = new Atom[size + 1];
-    head[0].setInt(size);
+struct Tuple {
+  Tuple(Atom* atoms, int length) {
+    atoms_ = atoms;
+    length_ = length;
   }
 
   Tuple(const Tuple& t) {
-    int len = t.length();
-    head = new Atom[len + 1];
-    memcpy(head, t.head, len * sizeof(Atom));
+    atoms_ = t.atoms_;
+    length_ = t.length_;
   }
 
   ~Tuple() {
-    delete [] head;
+  }
+
+  operator Atom() const {
+    return Atom(PT_TUPLE, NULL, TupleType(length_), atoms_);
   }
 
   int length() const {
-    return head[0].getInt();
+    return length_;
   }
 
   Atom& operator [] (int index) {
-    return head[index + 1];
+    return atoms_[index];
   }
 
   const Atom& operator [] (int index) const {
-    return head[index + 1];
+    return atoms_[index];
+  }
+  
+  const Atom* byName(string* name) {
+    for (int i = 0; i <= length_; i++) {
+      if (atoms_[i].name_ == name) {
+        return &atoms_[i];
+      }
+    }
   }
 
 private:
-  Atom* head;
+  Atom* atoms_;
+  int length_;
 
   Tuple() {}
 };
 
 
-Tuple meld(Tuple a, Tuple b);
+void meld(Tuple a, Tuple b);

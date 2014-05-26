@@ -168,18 +168,18 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Notes"
+			Name="ZZZ_Notes"
 			>
 			<File
-				RelativePath="..\Grammar.h"
+				RelativePath="..\src\ExampleOps.h"
 				>
 			</File>
 			<File
-				RelativePath="..\ParseTest1.h"
+				RelativePath="..\LuaGrammar.h"
 				>
 			</File>
 			<File
-				RelativePath="..\README.md"
+				RelativePath="..\src\ParseResult.h"
 				>
 			</File>
 			<File
@@ -211,14 +211,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\LexTable.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\src\LexTable.h"
-				>
-			</File>
-			<File
 				RelativePath="..\src\Token.cpp"
 				>
 			</File>
@@ -236,10 +228,6 @@
 			</File>
 			<File
 				RelativePath="..\src\Parser.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\ParseResult.h"
 				>
 			</File>
 		</Filter>
@@ -295,15 +283,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\Tuple.cpp"
+				RelativePath="..\src\Type.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\Tuple.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\Types.h"
+				RelativePath="..\src\Type.h"
 				>
 			</File>
 			<File
@@ -324,6 +308,58 @@
 			</File>
 			<File
 				RelativePath="..\src\TupleExperiment.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Virtual Machine"
+			>
+			<File
+				RelativePath="..\src\Machine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Machine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Opcodes.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Opcodes.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Structures"
+			>
+			<File
+				RelativePath="..\src\Table.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Table.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Tuple.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Tuple.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="ZZZ_Code"
+			>
+			<File
+				RelativePath="..\examples\gcd.h"
+				>
+			</File>
+			<File
+				RelativePath="..\examples\spectralnorm.h"
 				>
 			</File>
 		</Filter>

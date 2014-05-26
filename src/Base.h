@@ -1,8 +1,27 @@
 #pragma once
-#include "Stack.h"
 
-// Fundamental methods used by the VM
+/*
+namespace std {
+  template<class _Elem> struct char_traits;
+  template<class _Ty> class allocator;
+  template<class _Elem,
+	  class _Traits = char_traits<_Elem>,
+	  class _Ax = allocator<_Elem> >
+	  class basic_string;
 
+  typedef basic_string<char, char_traits<char>, allocator<char> > string;
 
-// Pops two tuples from the stack, pushes the concatenation of the two.
-int concat(AtomStack& stack);
+  template<class _Ty,
+	  class _Ax = allocator<_Ty> >
+	  class vector;
+};
+*/
+#include <string>
+#include <vector>
+#include <map>
+#include <assert.h>
+#include "stdint.h"
+
+using std::string;
+using std::map;
+using std::vector;

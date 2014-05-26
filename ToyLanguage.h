@@ -1,5 +1,9 @@
-printf("stretch tree of depth %u\t check: %li\n", stretchDepth, stretchTree.ItemCheck());
+printf("a,stretch tree of depth %u\t check: %li\n", stretchDepth, stretchTree.ItemCheck());
 
+a < b
+a =<< b
+a <<= b
+a < < b
 
 #include #include
 1234 56789 -1.2345e7 (111, 222, 333) == --
@@ -50,8 +54,11 @@ ZXhhbXBsZSBpcyBVVEYtNy4=
 
 //-----------------------------------------------------------------------------
 
-TreeNode = Struct(item : int, left : TreeNode?, right : TreeNode?);
-
+TreeNode = Struct(
+  item : int,
+  left : TreeNode?,
+  right : TreeNode?
+);
 
 TreeNode.ItemCheck = function(this : TreeNode) -> int {
   if (this.left && this.right) {
@@ -113,11 +120,22 @@ range = function(? : int = #, min : int, max : int) context block {
 }
 
 
-range = Generator(min : int, max : int) -> int {
-  loop (i : int = min) {
-    yield i;
-    if (i == max) break;
-    result = (i : int = i + 1);
+range := generator(min : int, max : int) : (function(step : int) : (int | break)) {
+  loop (i := min) {
+    yield := i;
+    next := (i < max) ? (i + step) : break;
+  }
+  result := break;
+}
+
+printrange := function() {
+  gen := range(1, 10);
+  loop {
+    i := gen(1);
+    if (type(i) == int) {
+      print("{{i}}", i);
+    }
+    next = i;
   }
 }
 
@@ -145,7 +163,23 @@ for (depth = minDepth, depth <= maxDepth, depth + 2) {
 }
 
 //-----------------------------------------------------------------------------
+// sum the integers from 1 to N
 
+sum := function(n : int) : (sum : int) {
+  result = loop (i := 1, sum := 0) {
+    next = (i == N) ? (i + 1, sum + i) : break;
+  }
+}
+
+for (int i = 0; i < 10; i++) {
+}
+
+loop (i := 0) {
+  next = i + 1;
+  if (i == 10) break;
+}
+
+//-----------------------------------------------------------------------------
 
 
 "this is a string with an embedded \" quote character"

@@ -6,150 +6,30 @@
 #include <math.h>
 #include <string>
 
-using std::string;
-
 // The character sets for binary, octal, decimal, and hexadecimal numeric representations.
 const char* binDigits = "01";
 const char* octDigits = "01234567";
 const char* decDigits = "0123456789";
 const char* hexDigits = "0123456789abcdefABCDEF";
 
+const char* identifierStart = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#";
+const char* identifierSet   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$#";
+
 // All valid characters that can begin a number.
 const char* numberStart = "0123456789";
+const char* numberSet   = "0123456789+-eE.";
+
+// All valid whitespace characters
+const char* spaceSet = " \t\r\n";
 
 // All valid characters that can begin an operator.
-const char* operatorStart = "=&|^!.+-*/%:?~";
+const char* operatorSet   = "<>=&|^!.+-*/%:?";
 
-const char* delimiters = "[](){},;";
+const char* delimiterSet = "[](){},;";
 
 // TODO(aappleby): Handle constant overflow.
-const char* largestU64 = "18446744073709551616";
+const char* largestU64 = "18446744073709551615";
 const char* largestS64 = "9223372036854775807";
-
-//-----------------------------------------------------------------------------
-// All multi-character operators in reverse order by length
-
-struct TokenTable {
-  int value;
-  const char* text;
-};
-
-
-const TokenTable keywordTable[] = {
-  {TT_FOR,           "for"},
-  {TT_IN,             "in"},
-  {TT_SWITCH,     "switch"},
-  {TT_CASE,         "case"},
-  {TT_DEFAULT,   "default"},
-  {TT_DO,             "do"},
-  {TT_WHILE,       "while"},
-  {TT_CONTINUE, "continue"},
-  {TT_IF,             "if"},
-  {TT_ELSE,         "else"},
-  {TT_BREAK,       "break"},
-  {TT_RETURN,     "return"},
-  {TT_YIELD,       "yield"},
-
-  {TT_ARGS,         "args"},
-  {TT_RESULT,     "result"},
-  {TT_TRUE,         "true"},
-  {TT_FALSE,       "false"},
-
-  {TT_TYPE,         "type"},
-  {TT_FUNCTION, "function"},
-  {TT_DEBUGGER, "debugger"},
-
-  {TT_NEW,           "new"},
-  {TT_DELETE,     "delete"},
-};
-const int keywordCount = sizeof(keywordTable) / sizeof(keywordTable[0]);
-
-const TokenTable operatorTable[] = {
-  {TT_LROTEQ,  "<<<="}, {TT_RROTEQ,  ">>>="},
-   
-  {TT_LOGANDEQ, "&&="}, {TT_LOGOREQ,  "||="}, {TT_LOGXOREQ, "^^="}, {TT_LSHIFTEQ, "<<="}, 
-  {TT_RSHIFTEQ, ">>="}, {TT_LROT,     "<<<"}, {TT_RROT,     ">>>"}, {TT_SAME,     "==="}, 
-  {TT_NOTSAME,  "!=="}, {TT_ELLIPSIS, "..."},
-
-  {TT_INC,       "++"}, {TT_DEC,       "--"}, {TT_ADDEQ,     "+="}, {TT_SUBEQ,     "-="},  
-  {TT_MULEQ,     "*="}, {TT_DIVEQ,     "/="}, {TT_MODEQ,     "%="}, {TT_LESSEQ,    "<="},  
-  {TT_GREATEREQ, ">="}, {TT_CONCAT,    ".."}, {TT_LOGEQ,     "=="}, {TT_LOGAND,    "&&"},  
-  {TT_LOGOR,     "||"}, {TT_LOGXOR,    "^^"}, {TT_LOGNOT,    "!!"}, {TT_BITEQ,     "=="},  
-  {TT_BITANDEQ,  "&="}, {TT_BITOREQ,   "|="}, {TT_BITXOREQ,  "^="}, {TT_LARROW,    "<-"},  
-  {TT_RARROW,    "->"}, {TT_LSHIFT,    "<<"}, {TT_RSHIFT,    ">>"}, {TT_SCOPE,     "::"},  
-  {TT_DECLARE,   ":="},
-  
-  {TT_BANG,       "!"}, {TT_POUND,      "#"}, {TT_DOLLAR,     "$"}, {TT_PERCENT,    "%"},
-  {TT_AMPERSAND,  "&"}, {TT_STAR,       "*"}, {TT_PLUS,       "+"}, {TT_DASH,       "-"},
-  {TT_PERIOD,     "."}, {TT_FSLASH,     "/"}, {TT_COLON,      ":"}, {TT_LANGLE,     "<"},
-  {TT_EQUALS,     "="}, {TT_RANGLE,     ">"}, {TT_QUESTION,   "?"}, {TT_AT,         "@"},
-  {TT_CARET,      "^"}, {TT_UNDER,      "_"}, {TT_BACKTICK,   "`"}, {TT_PIPE,       "|"},
-  {TT_TILDE,      "~"}, {TT_BSLASH,     "\\"}
-};
-const int operatorCount = sizeof(operatorTable) / sizeof(operatorTable[0]);
-
-const TokenTable delimiterTable[] = {
-  {TT_LPAREN,     "("}, {TT_RPAREN,     ")"},
-  {TT_LBRACE,     "{"}, {TT_RBRACE,     "}"},
-  {TT_LSQUARE,    "["}, {TT_RSQUARE,    "]"},
-  {TT_COMMA,      ","}, {TT_SEMICOLON , ";"},
-};
-const int delimiterCount = sizeof(delimiterTable) / sizeof(delimiterTable[0]);
-
-
-int tokenValue(const TokenTable* table, int tokenCount, const char* start, const char* end) {
-  for (int i = 0; i < tokenCount; i++) {
-    if (strncmp(table[i].text, start, end-start) == 0) {
-      return table[i].value;
-    }
-  }
-  return -1;
-}
-
-const char* tokenText(const TokenTable * table, int tokenCount, int64_t token) {
-  for (int i = 0; i < tokenCount; i++) {
-    if (table[i].value == token) {
-      return table[i].text;
-    }
-  }
-  return "<unknown>";
-}
-
-int Lexer::lexOperator() {
-  for (int i = 0; i < operatorCount; i++) {
-    size_t len = strlen(operatorTable[i].text);
-    if (strncmp(operatorTable[i].text, cursor, len) == 0) {
-      addToken(Token(TT_OPERATOR, operatorTable[i].value, cursor, cursor + len));
-      cursor += len;
-      return LEX_OK;
-    }
-  }
-  return LEX_ERROR;
-}
-
-int Lexer::lexDelimiter() {
-  for (int i = 0; i < delimiterCount; i++) {
-    size_t len = strlen(delimiterTable[i].text);
-    if (strncmp(delimiterTable[i].text, cursor, len) == 0) {
-      addToken(Token(TT_DELIMITER, delimiterTable[i].value, cursor, cursor + len));
-      cursor += len;
-      return LEX_OK;
-    }
-  }
-  return LEX_ERROR;
-}
-
-int Lexer::lexKeyword() {
-  for (int i = 0; i < keywordCount; i++) {
-    size_t len = strlen(keywordTable[i].text);
-    if (strncmp(keywordTable[i].text, cursor, len) == 0) {
-      addToken(Token(TT_KEYWORD, keywordTable[i].value, cursor, cursor + len));
-      cursor += len;
-      return LEX_OK;
-    }
-  }
-  return LEX_ERROR;
-}
 
 //-----------------------------------------------------------------------------
 
@@ -161,6 +41,23 @@ int match1(const char* v, const char* chars) {
     chars++;
   }
   return 0;
+}
+
+int matchText(const char * start, const char* end, const char* text) {
+  while ((start < end) && *text && (*start == *text)) {
+    start++;
+    text++;
+  }
+  return (*text == 0) && (start == end) ? 1 : 0;
+}
+
+TokenValue matchTable(const char* start, const char* end, const TokenTable* table, int count) {
+  for (int i = 0; i < count; i++) {
+    if (matchText(start, end, table[i].text)) {
+      return table[i].value;
+    }
+  }
+  return TV_INVALID;
 }
 
 //-----------------------------------------------------------------------------
@@ -236,7 +133,8 @@ double toFloat(const char* start, const char* decimal, const char* end, int base
 }
 
 //-----------------------------------------------------------------------------
-// [-+]?[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)?
+// this is not a valid regex, it's just a note.
+// [-+]?(0x[a-fA-F0-9]+|[0-9]+)*\.?[0-9]*([eEpP][-+]?[0-9]+)?
 
 int Lexer::lexNumber() {
   const char* digits = decDigits;
@@ -271,7 +169,7 @@ int Lexer::lexNumber() {
       break;
     default:
       // Bare zero.
-      addToken(Token(TT_INTEGER, 0, cursor, cursor + 1));
+      addToken(Token(TT_INTEGER, uint64_t(0), cursor, cursor + 1));
       cursor++;
       return LEX_OK;
     };
@@ -315,30 +213,6 @@ int Lexer::lexNumber() {
     cursor = numberEnd;
     return LEX_OK;
   }
-}
-
-//-----------------------------------------------------------------------------
-
-int Lexer::lexIdentifier() {
-  assert(isalpha(*cursor));
-  const char* start = cursor;
-  const char* end = cursor + 1;
-  while(*end && isalnum(*end)) end++;
-  addToken(Token(TT_IDENTIFIER, start, end));
-  cursor = end;
-  return LEX_OK;
-}
-
-//-----------------------------------------------------------------------------
-
-int Lexer::lexDirective() {
-  assert(*cursor == '#');
-  const char* start = cursor + 1;
-  const char* end = cursor + 1;
-  while(*end && isalnum(*end)) end++;
-  addToken(Token(TT_DIRECTIVE, start, end));
-  cursor = end;
-  return LEX_OK;
 }
 
 //-----------------------------------------------------------------------------
@@ -541,12 +415,6 @@ int Lexer::lexString() {
 
 //-----------------------------------------------------------------------------
 
-int Lexer::lexRune() {
-  return LEX_ERROR;
-}
-
-//-----------------------------------------------------------------------------
-
 int Lexer::lexComment() {
   // Multi-line comment.
 
@@ -614,10 +482,12 @@ int Lexer::lex(std::string& code) {
     if (linestart) {
       linestart = false;
       if (*cursor == '#') {
-        if (lexDirective() == LEX_OK) {
-          lineIsDirective = true;
-          continue;
-        }
+        lineIsDirective = true;
+        const char* start = cursor + 1;
+        const char* end = skipN(start, identifierSet);
+        addToken(Token(TT_DIRECTIVE, start, end));
+        cursor = end;
+        continue;
       }
     }
 
@@ -665,32 +535,49 @@ int Lexer::lex(std::string& code) {
       continue;
     }
 
-    if ((*cursor >= '0') && (*cursor <= '9')) {
+    if (match1(cursor, numberStart)) {
       lexNumber();
       continue;
     }
 
-    // Might be an operator.
-    if (lexOperator() == LEX_OK) {
+    if (match1(cursor, operatorSet)) {
+      const char* start = cursor;
+      const char* end = skipN(start, operatorSet);
+      TokenValue op = matchTable(start, end, operatorTable, operatorCount);
+      addToken(Token(TT_OPERATOR, op, start, end));
+      cursor = end;
       continue;
     }
 
-    // Might be a delimiter.
-    if (lexDelimiter() == LEX_OK) {
-      continue;
-    }
-
-    // Might be a keyword.
-    if (lexKeyword() == LEX_OK) {
-      continue;
-    }
-
-    // Might be an identifier.
-    if ((*cursor >= 'a' && *cursor <= 'z') ||
-        (*cursor >= 'A' && *cursor <= 'Z')) {
-      if (lexIdentifier() == LEX_OK) {
-        continue;
+    if (match1(cursor, delimiterSet)) {
+      const char* start = cursor;
+      const char* end = cursor + 1;
+      TokenValue op = matchTable(start, end, delimiterTable, delimiterCount);
+      if (op != TV_INVALID) {
+        addToken(Token(TT_DELIMITER, op, start, end));
       }
+      cursor = end;
+      continue;
+    }
+
+    if (match1(cursor, identifierStart)) {
+      // Keyword, native type, or identifier.
+      const char* start = cursor;
+      const char* end = skipN(start, identifierSet);
+
+      TokenValue value = TV_INVALID;
+      if ((value = matchTable(start, end, keywordTable, keywordCount)) != TV_INVALID) {
+        addToken(Token(TT_KEYWORD, value, start, end));
+      }
+      else if ((value = matchTable(start, end, nativeTable, nativeCount)) != TV_INVALID) {
+        addToken(Token(TT_NATIVE, value, start, end));
+      }
+      else {
+        addToken(Token(TT_IDENTIFIER, start, end));
+      }
+
+      cursor = end;
+      continue;
     }
 
     // No idea what this is so skip it.
@@ -712,77 +599,19 @@ void Lexer::dump() {
   int depth = 0;
   for (size_t i = 0; i < tokens.size(); i++) {
     Token& t = tokens[i];
+    if (skipComments && t.type == TT_COMMENT) continue;
+
     printf("%4d: ", t.line);
-    string s(t.start, t.end);
-    switch(t.type) {
-    case TT_INVALID:
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("<Invalid>\n");
-      break;
-    case TT_DIRECTIVE: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Directive  - %s\n", s.c_str());
-      break;
-    }
-    case TT_COMMENT: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Comment    - %s\n", s.c_str());
-      break;
-    }
-    case TT_KEYWORD: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Keyword    - %s\n", s.c_str());
-      break;
-    }
-    case TT_IDENTIFIER: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Identifier - %s\n", s.c_str());
-      break;
-    }
-    case TT_INTEGER: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Int        - %lld\n", t.s64);
-      break;
-    }
-    case TT_FLOAT: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Float      - %.16g\n", t.f64);
-      break;
-    }
-    case TT_STRING: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("String     - %s\n", s.c_str());
-      break;
-    } 
-    case TT_OPERATOR: {
-      for (int j = 0; j < depth; j++) putc(' ', stdout);
-      printf("Operator   - '%s'\n", tokenText(operatorTable, operatorCount, t.symbol));
-      break;
-    }
-    case TT_DELIMITER: {
-      if (t.symbol == '{' || t.symbol == '(' || t.symbol == '[') {
-        for (int j = 0; j < depth; j++) putc(' ', stdout);
-        printf("Delimiter  - '%s'\n", tokenText(delimiterTable, delimiterCount, t.symbol));
-        depth += 4;
-      }
-      else if (t.symbol == '}' || t.symbol == ')' || t.symbol == ']') {
-        depth -= 4;
-        for (int j = 0; j < depth; j++) putc(' ', stdout);
-        printf("Delimiter  - '%s'\n", tokenText(delimiterTable, delimiterCount, t.symbol));
-      } else {
-        for (int j = 0; j < depth; j++) putc(' ', stdout);
-        printf("Delimiter  - '%s'\n", tokenText(delimiterTable, delimiterCount, t.symbol));
-      }
-      break;
-    }
-    case TT_EOF: {
-      printf("EOF\n");
-      break;
+
+    if (t.value == DL_RBRACE || t.value == DL_RPAREN || t.value == DL_RSQUARE) {
+      depth -= 2;
     }
 
-    default:
-      printf("Unknown!\n");
-      break;
+    for (int j = 0; j < depth; j++) putc(' ', stdout);
+    t.dump();
+
+    if (t.value == DL_LBRACE || t.value == DL_LPAREN || t.value == DL_LSQUARE) {
+      depth += 2;
     }
   }
 }

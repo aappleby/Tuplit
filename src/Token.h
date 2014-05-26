@@ -1,5 +1,5 @@
 #pragma once
-#include "stdint.h"
+#include "Base.h"
 
 // identifiers, keywords, operators and delimiters, and literals
 
@@ -11,176 +11,225 @@ enum TokenType {
 
   // Types
 
-  TT_COMMENT    = 10001,
-  TT_IDENTIFIER = 10002,
-  TT_KEYWORD    = 10003,
-  TT_OPERATOR   = 10004,
-  TT_DELIMITER  = 10005,
-  TT_INTEGER    = 10006,
-  TT_FLOAT      = 10007,
-  TT_RUNE       = 10008,
-  TT_STRING     = 10009,
-  TT_DIRECTIVE  = 10010,
+  TT_KEYWORD    = 10000,
+  TT_OPERATOR   = 20000,
+  TT_DELIMITER  = 30000,
+  TT_NATIVE     = 40000,
+
+  TT_IDENTIFIER = 50000,
+  TT_INTEGER    = 60000,
+  TT_FLOAT      = 70000,
+  TT_RUNE       = 80000,
+  TT_STRING     = 90000,
+
+  TT_DIRECTIVE  = 100000,
+  TT_COMMENT    = 110000,
+};
+
+
+enum TokenValue {
+  TV_INVALID  = -1,
 
   // Keywords
+  KW_FOR        = 10001,
+  KW_IN,
+  KW_SWITCH,
+  KW_CASE,
+  KW_DEFAULT,
+  KW_DO,
+  KW_WHILE,
+  KW_CONTINUE,
+  KW_IF,
+  KW_ELSE,
+  KW_BREAK,
+  KW_RETURN,
+  KW_YIELD,
 
-  TT_FOR,
-  TT_IN,
-  TT_SWITCH,
-  TT_CASE,
-  TT_DEFAULT,
-  TT_DO,
-  TT_WHILE,
-  TT_CONTINUE,
-  TT_IF,
-  TT_ELSE,
-  TT_BREAK,
-  TT_RETURN,
-  TT_YIELD,
+  KW_ARGS,
+  KW_RESULT,
+  KW_TRUE,
+  KW_FALSE,
 
-  TT_ARGS,
-  TT_RESULT,
-  TT_TRUE,
-  TT_FALSE,
+  KW_TYPE,
+  KW_FUNCTION,
+  KW_DEBUGGER,
 
-  TT_TYPE,
-  TT_FUNCTION,
-  TT_DEBUGGER,
-
-  TT_NEW,
-  TT_DELETE,
+  KW_NEW,
+  KW_DELETE,
 
   // Monograph operators in ascii order.
 
-  TT_BANG      = '!',
-  TT_POUND     = '#',
-  TT_DOLLAR    = '$',
-  TT_PERCENT   = '%',
-  TT_AMPERSAND = '&',
+  OP_BANG      = '!',
+  OP_POUND     = '#',
+  OP_DOLLAR    = '$',
+  OP_PERCENT   = '%',
+  OP_AMPERSAND = '&',
 
-  TT_STAR      = '*',
-  TT_PLUS      = '+',
-  TT_DASH      = '-',
-  TT_PERIOD    = '.',
-  TT_FSLASH    = '/',
-  TT_COLON     = ':',
-  TT_LANGLE    = '<',
-  TT_EQUALS    = '=',   
-  TT_RANGLE    = '>',
-  TT_QUESTION  = '?',
+  OP_STAR      = '*',
+  OP_PLUS      = '+',
+  OP_DASH      = '-',
+  OP_PERIOD    = '.',
+  OP_FSLASH    = '/',
+  OP_COLON     = ':',
+  OP_LANGLE    = '<',
+  OP_EQUALS    = '=',   
+  OP_RANGLE    = '>',
+  OP_QUESTION  = '?',
 
-  TT_AT        = '@',
-  TT_BSLASH    = '\\',
-  TT_CARET     = '^',
-  TT_UNDER     = '_',
-  TT_BACKTICK  = '`',
+  OP_AT        = '@',
+  OP_BSLASH    = '\\',
+  OP_CARET     = '^',
+  OP_UNDER     = '_',
+  OP_BACKTICK  = '`',
 
-  TT_PIPE      = '|',
-  TT_TILDE     = '~',
+  OP_PIPE      = '|',
+  OP_TILDE     = '~',
 
   // Monograph aliases.
 
-  TT_ADD       = TT_PLUS,
-  TT_SUB       = TT_DASH,
-  TT_MUL       = TT_STAR,
-  TT_DIV       = TT_FSLASH,
-  TT_MOD       = TT_PERCENT,
+  OP_ADD       = OP_PLUS,
+  OP_SUB       = OP_DASH,
+  OP_MUL       = OP_STAR,
+  OP_DIV       = OP_FSLASH,
+  OP_MOD       = OP_PERCENT,
 
-  TT_ASSIGN    = TT_EQUALS,
-  TT_LESS      = TT_LANGLE,
-  TT_GREATER   = TT_RANGLE,
+  OP_ASSIGN    = OP_EQUALS,
+  OP_LESS      = OP_LANGLE,
+  OP_GREATER   = OP_RANGLE,
 
-  TT_BITAND    = TT_AMPERSAND,
-  TT_BITOR     = TT_PIPE,
-  TT_BITXOR    = TT_CARET,
-  TT_BITNOT    = TT_BANG,
+  OP_BITAND    = OP_AMPERSAND,
+  OP_BITOR     = OP_PIPE,
+  OP_BITXOR    = OP_CARET,
+  OP_BITNOT    = OP_BANG,
 
-  TT_MERGE     = TT_COLON,
+  OP_MERGE     = OP_COLON,
 
   // Digraphs
 
-  TT_INC       = 2001,  // ++
-  TT_DEC       = 2002,  // --
+  OP_INC       = 22001,  // ++
+  OP_DEC       = 22002,  // --
 
-  TT_ADDEQ     = 2003,  // +=
-  TT_SUBEQ     = 2004,  // -=
-  TT_MULEQ     = 2005,  // *=
-  TT_DIVEQ     = 2006,  // /=
-  TT_MODEQ     = 2007,  // %=
+  OP_ADDEQ     = 22003,  // +=
+  OP_SUBEQ     = 22004,  // -=
+  OP_MULEQ     = 22005,  // *=
+  OP_DIVEQ     = 22006,  // /=
+  OP_MODEQ     = 22007,  // %=
 
-  TT_LESSEQ    = 2008,  // <=
-  TT_GREATEREQ = 2009,  // >=
+  OP_LESSEQ    = 22008,  // <=
+  OP_GREATEREQ = 22009,  // >=
 
-  TT_CONCAT    = 2010,  // ..
+  OP_CONCAT    = 22010,  // ..
 
-  TT_LOGEQ     = 2011,  // ==
-  TT_LOGAND    = 2012,  // &&
-  TT_LOGOR     = 2013,  // ||
-  TT_LOGXOR    = 2014,  // ^^
-  TT_LOGNOT    = 2015,  // !!
+  OP_LOGEQ     = 22011,  // ==
+  OP_LOGAND    = 22012,  // &&
+  OP_LOGOR     = 22013,  // ||
+  OP_LOGXOR    = 22014,  // ^^
+  OP_LOGNOT    = 22015,  // !!
 
-  TT_BITEQ     = 2016,  // ==
-  TT_BITANDEQ  = 2017,  // &=
-  TT_BITOREQ   = 2018,  // |=
-  TT_BITXOREQ  = 2019,  // ^=
+  OP_BITEQ     = 22016,  // ==
+  OP_BITANDEQ  = 22017,  // &=
+  OP_BITOREQ   = 22018,  // |=
+  OP_BITXOREQ  = 22019,  // ^=
 
-  TT_LARROW    = 2020,  // <-
-  TT_RARROW    = 2021,  // ->
-  TT_LSHIFT    = 2022,  // <<
-  TT_RSHIFT    = 2023,  // >>
+  OP_LARROW    = 22020,  // <-
+  OP_RARROW    = 22021,  // ->
+  OP_LSHIFT    = 22022,  // <<
+  OP_RSHIFT    = 22023,  // >>
 
-  TT_SCOPE     = 2024,  // ::
-  TT_DECLARE   = 2025,  // :=
+  OP_SCOPE     = 22024,  // ::
+  OP_DECLARE   = 22025,  // :=
 
   // N-graphs
 
-  TT_LOGANDEQ  = 3001,  // &&=
-  TT_LOGOREQ   = 3002,  // ||=
-  TT_LOGXOREQ  = 3003,  // ^^=
+  OP_LOGANDEQ  = 23001,  // &&=
+  OP_LOGOREQ   = 23002,  // ||=
+  OP_LOGXOREQ  = 23003,  // ^^=
 
-  TT_LSHIFTEQ  = 3004,  // <<=
-  TT_RSHIFTEQ  = 3005,  // >>=
-  TT_LROT      = 3006,  // <<<
-  TT_RROT      = 3007,  // >>>
+  OP_LSHIFTEQ  = 23004,  // <<=
+  OP_RSHIFTEQ  = 23005,  // >>=
+  OP_LROT      = 23006,  // <<<
+  OP_RROT      = 23007,  // >>>
 
-  TT_SAME      = 3008,  // ===
-  TT_NOTSAME   = 3009,  // !==
+  OP_SAME      = 23008,  // ===
+  OP_NOTSAME   = 23009,  // !==
 
-  TT_ELLIPSIS  = 3010,  // ...
+  OP_ELLIPSIS  = 23010,  // ...
 
-  TT_LROTEQ    = 4001,  // <<<=
-  TT_RROTEQ    = 4002,  // >>>=
+  OP_LROTEQ    = 24001,  // <<<=
+  OP_RROTEQ    = 24002,  // >>>=
 
   // Delimiters
 
-  TT_LPAREN    = '(',
-  TT_RPAREN    = ')',
-  TT_LBRACE    = '{',
-  TT_RBRACE    = '}',
-  TT_LSQUARE   = '[',
-  TT_RSQUARE   = ']',
-  TT_COMMA     = ',',
-  TT_SEMICOLON = ';',
+  DL_LPAREN    = '(',
+  DL_RPAREN    = ')',
+  DL_LBRACE    = '{',
+  DL_RBRACE    = '}',
+  DL_LSQUARE   = '[',
+  DL_RSQUARE   = ']',
+  DL_COMMA     = ',',
+  DL_SEMICOLON = ';',
+
+  // Declared types
+
+  DT_INT8      = 40001,
+  DT_INT16,
+  DT_INT32,
+  DT_INT64,
+
+  DT_UINT8,
+  DT_UINT16,
+  DT_UINT32,
+  DT_UINT64,
+
+  DT_FLOAT32,
+  DT_FLOAT64,
+
+  DT_RUNE,
+  DT_STRING,
+
+  DT_STRUCT,
+  DT_CLASS,
 };
 
+
+struct TokenTable {
+  TokenValue value;
+  const char* text;
+};
+
+
+extern const TokenTable keywordTable[];
+extern const int keywordCount;
+
+extern const TokenTable nativeTable[];
+extern const int nativeCount;
+
+extern const TokenTable operatorTable[];
+extern const int operatorCount;
+
+extern const TokenTable delimiterTable[];
+extern const int delimiterCount;
+
 struct Token {
-  Token(int type_, int value_, const char* start_, const char* end_)
-    : type(type_), start(start_), end(end_) { s64 = value_; }
-  Token(int type_, uint64_t value_, const char* start_, const char* end_)
+  Token(TokenType type_, TokenValue value_, const char* start_, const char* end_)
+    : type(type_), start(start_), end(end_) { value = value_; }
+  Token(TokenType type_, uint64_t value_, const char* start_, const char* end_)
     : type(type_), start(start_), end(end_) { u64 = value_; }
-  Token(int type_, double value_, const char* start_, const char* end_)
+  Token(TokenType type_, double value_, const char* start_, const char* end_)
     : type(type_), start(start_), end(end_) { f64 = value_; }
-  Token(int type_, const char* start_, const char* end_)
+  Token(TokenType type_, const char* start_, const char* end_)
     : type(type_), start(start_), end(end_) { u64 = 0; }
 
+  void dump();
+
   int line;
-  int type;
+  TokenType type;
 
   union {
-    uint64_t u64;  // Unsigned 64-bit int.
-    int64_t  s64;  // Signed 64-bit int.
-    double   f64;  // 64-bit float.
-    int symbol;
+    TokenValue value;
+    uint64_t   u64;  // Unsigned 64-bit int.
+    int64_t    s64;  // Signed 64-bit int.
+    double     f64;  // 64-bit float.
   };
 
   const char* start;

@@ -32,6 +32,10 @@ public:
   };
   int lex(std::string& code);
 
+  void setSkipComments(bool skip) {
+    skipComments_ = skip;
+  }
+
   void dump();
 
   void reset() {
@@ -48,26 +52,39 @@ public:
     scratch.clear();
   }
 
-  std::vector<Token> tokens;
-  std::string scratch;
+  void start() {
+    read_cursor = 0;
+    skipComments(read_cursor);
+  }
 
-  Token peek() {
+  Token get() {
     return tokens[read_cursor];
   }
 
+  Token peek(int distance) {
+    int cursor = read_cursor;
+    for (int i = 0; i < distance; i++) {
+      skipComments(cursor);
+      cursor++;
+    }
+    skipComments(cursor);
+    return tokens[cursor];
+  }
+
   Token next() {
-    return tokens[read_cursor++];
+    Token t = get();
+    read_cursor++;
+    skipComments(read_cursor);
+    return t;
+  }
+
+  void skipComments(int& cursor) {
+    while (skipComments_ && (tokens[cursor].type == TT_COMMENT)) {
+      cursor++;
+    }
   }
   
 protected:
-
-  int read_cursor;
-  int linecount;
-
-  const char* codeStart;
-  const char* codeEnd;
-
-  const char* cursor;
 
   void addToken(Token t);
 
@@ -78,6 +95,7 @@ protected:
   int lexOperator ();
   int lexDelimiter();
   int lexKeyword();
+  int lexNative();
   int lexIdentifier();
   int lexComment();
   int lexDirective();
@@ -89,6 +107,21 @@ protected:
   int lexRawString();
   int lexBase64String();
   int lexRune();
+
+  //----------
+
+  std::vector<Token> tokens;
+  std::string scratch;
+
+  int read_cursor;
+  int linecount;
+
+  const char* codeStart;
+  const char* codeEnd;
+
+  const char* cursor;
+
+  bool skipComments_;
 };
 
 //-----------------------------------------------------------------------------
