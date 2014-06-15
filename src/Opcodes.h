@@ -1,13 +1,5 @@
 #pragma once
 
-struct Instruction {
-  int opcode;
-  int ra;
-  int rb;
-  int rc;
-  int rd;
-};
-
 // in to current routine
 #define REG_IN(A)        (A | 0x100)
 // out from current routine
@@ -43,8 +35,11 @@ enum Opcode {
   OC_GET,    // ra = rb[rc]
   OC_SET,    // ra[rb] = rc
 
+  OC_LOADC,  // ra = constants[rb];
+
   OC_CLR,    // ra = 0
   OC_MOV,    // ra = rb
+  OC_MOVV,   // ra.value = rb.value
   OC_IMOV,   // r[a + b] = r[c + d]
   OC_BMOV,   // (ra ... r[a+c]) = (rb ... r[b+c])    (block move)
   OC_SWAP,   // temp = ra; ra = rb; rb = temp
@@ -62,6 +57,9 @@ enum Opcode {
   OC_TUPLE,  // ra = tuple(rb ... rc)
   OC_LIST,   // ra = list(rb ... rc)
   OC_SPLAT,  // (ra ... rb) = rc
+
+  OC_PUSH,   // stack += (ra ... rb)
+  OC_POP,    // stack -= ra
 
   OC_ADD,    // ra = rb + rc
   OC_SUB,    // ra = rb - rc
@@ -109,3 +107,10 @@ enum Opcode {
   OC_PRINTC, // printf("%s",toString(ra.value));
 };
 
+struct Instruction {
+  Opcode opcode;
+  int ra;
+  int rb;
+  int rc;
+  int rd;
+};

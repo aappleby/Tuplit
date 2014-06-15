@@ -16,6 +16,7 @@ namespace std {
 	  class vector;
 };
 */
+
 #include <string>
 #include <vector>
 #include <map>
@@ -25,3 +26,5 @@ namespace std {
 using std::string;
 using std::map;
 using std::vector;
+
+vector<string> split(const string &s, char delim);

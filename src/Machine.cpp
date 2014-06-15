@@ -295,20 +295,20 @@ void Machine::run(Instruction* code) {
 //------------------------------------------------------------------------------
 
 Atom Machine::get(Atom& a, Atom& b) {
-  assert((a.meta_.type == PT_TUPLE) ||
-         (a.meta_.type == PT_LIST));
+  assert((a.ptype_ == PT_TUPLE) ||
+         (a.ptype_ == PT_LIST));
 
-  assert((b.meta_.type == PT_INT) ||
-         (b.meta_.type == PT_TEXT));
+  assert((b.ptype_ == PT_INT) ||
+         (b.ptype_ == PT_TEXT));
 
-  if (a.meta_.type == PT_TUPLE) {
-    if (b.meta_.type == PT_INT) {
+  if (a.ptype_ == PT_TUPLE) {
+    if (b.ptype_ == PT_INT) {
       assert(b.value_.s64 >= 0);
-      assert(b.value_.s64 < a.type_->length);
+      assert(b.value_.s64 < TupleLength(a.type_));
       return a.value_.atom[b.value_.s64];
     } else {
-      for (int i = 0; i < a.type_->length; i++) {
-        if (a.value_.atom[i].name_ == b.value_.text) {
+      for (int i = 0; i < TupleLength(a.type_); i++) {
+        if (a.value_.atom[i].name_ == b.text_) {
           return a.value_.atom[i];
         }
       }
@@ -324,15 +324,15 @@ void Machine::set(Atom& a, Atom & b, Atom& c) {
 //------------------------------------------------------------------------------
 
 Atom Machine::name(Atom& a) {
-  return Atom();
+  return Atom::name(a);
 }
 
 Atom Machine::type(Atom& a) {
-  return Atom(a.meta_, NULL, NULL, a.value_);
+  return Atom::type(a);
 }
 
 Atom Machine::value(Atom& a) {
-  return Atom(a.meta_, NULL, NULL, a.value_);
+  return Atom::value(a);
 }
 
 Atom Machine::len(Atom& ra) {
@@ -356,14 +356,14 @@ Atom Machine::list(int a, int b) {
 //------------------------------------------------------------------------------
 
 Atom Machine::car(Atom& a) {
-  assert((a.meta_.type == PT_LIST) ||
-         (a.meta_.type == PT_TUPLE));
+  assert((a.ptype_ == PT_LIST) ||
+         (a.ptype_ == PT_TUPLE));
   return Atom();
 }
 
 Atom Machine::cdr(Atom& a) {
-  assert((a.meta_.type == PT_LIST) ||
-         (a.meta_.type == PT_TUPLE));
+  assert((a.ptype_ == PT_LIST) ||
+         (a.ptype_ == PT_TUPLE));
   return Atom();
 }
 
@@ -374,13 +374,13 @@ Atom Machine::cons(Atom& a, Atom& b) {
 //------------------------------------------------------------------------------
 
 Atom Machine::add(Atom& a, Atom& b) {
-  if (a.meta_.type != b.meta_.type) return Atom::nil;
+  if (a.ptype_ != b.ptype_) return Atom::nil;
 
-  if (a.meta_.type == PT_INT) {
+  if (a.ptype_ == PT_INT) {
     return Atom(a.value_.s64 + b.value_.s64);
   }
 
-  if (a.meta_.type == PT_FLOAT) {
+  if (a.ptype_ == PT_FLOAT) {
     return Atom(a.value_.f64 + b.value_.f64);
   }
 

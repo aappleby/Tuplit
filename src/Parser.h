@@ -72,6 +72,7 @@ public:
 //-----------------------------------------------------------------------------
 
 class Variable {
+public:
   Function* context;
   string name;
   string file;
@@ -83,19 +84,9 @@ class Variable {
 //-----------------------------------------------------------------------------
 
 class Block {
+public:
   int startPC;
   int endPC;
-};
-
-//-----------------------------------------------------------------------------
-
-class Function {
-  std::string name;
-  Tuple args;
-  Tuple results;
-  std::vector<Instruction> code;
-
-  std::vector<string> regs;
 };
 
 //-----------------------------------------------------------------------------
@@ -108,44 +99,51 @@ class Module {
 
 class Parser {
 public:
-  int parse(Lexer* lex_);
+  Parser();
+
+  int parse();
 
   void dump();
 
+  Lexer lex;
+
 private:
 
-  void dumpNode(ParseNode* node, int depth);
-
-  void push(ParseNode* node) {
-    stack.push_back(node);
-  }
-
-  ParseNode* pop() {
-    if (stack.empty()) return NULL;
-    ParseNode* result = stack.back();
-    stack.pop_back();
-    return result;
-  }
+  // Given a name, finds the atom in scope (local or global) that matches it.
+  // Returns the nil atom if not found.
+  Atom resolve(string& name);
 
   ParseStatus skipExpected(TokenType type, TokenValue value);
+  ParseStatus skipOptional(TokenType type, TokenValue value);
 
   int getPC();
 
-  int emit (Opcode op, int regA, int regB);
+  int emit (Opcode op, int regA, int regB = 0);
 
   int jumpTo(int pc);
   int patchJumpFrom (int pc);
 
+  int allocateVariable(string& name);
+  int addConstant(const Atom& c);
+
+  int evalLiteral();
+  int evalExpression();
+
+  // Parse methods consume tokens and place code pieces on the stack.
+
+  int parseAtom();
+  int parseTuple();
+
+  int parseFunction();
+
+  int parseCall();
+  int parseDecl();
   int parseCallOrDecl();
 
-  int parseCall(Token functionName);
-
   int parseLhsAtom();
-  int parseAtom();
   int parseLhs();
   int parseRhs();
 
-  int parseTuple();
   int parseExpression();
 
   int parseStatementList();
@@ -161,13 +159,18 @@ private:
   int parseBlock();
   int closeBlock();
 
-  Lexer* lex;
+  std::vector<Atom> constants;
+  std::vector<Atom> stack;
+  // The start of the current stack frame.
+  int stackBase;
 
-  int stackTop;
+  // Atoms below localTop in the stack correspond to named local variables.
+  int localTop;
 
-  std::vector<ParseNode*> stack;
-  std::vector<ParseNode*> expressions;
+  Function* currentFunction;
 
-  std::map<string, Function*> functions;
-  std::map<string, Variable*> variables;
+  //std::vector<ParseNode*> stack;
+  //std::vector<ParseNode*> expressions;
+
+  AtomMap globals;
 };

@@ -14,7 +14,7 @@ enum TokenType {
   TT_KEYWORD    = 10000,
   TT_OPERATOR   = 20000,
   TT_DELIMITER  = 30000,
-  TT_NATIVE     = 40000,
+  TT_NATIVE     = 40000,  // Native types, (u)int(8/16/32/64), float(32/64)
 
   TT_IDENTIFIER = 50000,
   TT_INTEGER    = 60000,
@@ -72,7 +72,7 @@ enum TokenValue {
   OP_FSLASH    = '/',
   OP_COLON     = ':',
   OP_LANGLE    = '<',
-  OP_EQUALS    = '=',   
+  OP_EQUALS    = '=',
   OP_RANGLE    = '>',
   OP_QUESTION  = '?',
 
@@ -212,13 +212,13 @@ extern const int delimiterCount;
 
 struct Token {
   Token(TokenType type_, TokenValue value_, const char* start_, const char* end_)
-    : type(type_), start(start_), end(end_) { value = value_; }
+    : type(type_), start(start_), end(end_) { value = value_; while(start_ != end_) { text.push_back(*start_++); }; }
   Token(TokenType type_, uint64_t value_, const char* start_, const char* end_)
-    : type(type_), start(start_), end(end_) { u64 = value_; }
+    : type(type_), start(start_), end(end_) { u64 = value_; while(start_ != end_) { text.push_back(*start_++); };  }
   Token(TokenType type_, double value_, const char* start_, const char* end_)
-    : type(type_), start(start_), end(end_) { f64 = value_; }
+    : type(type_), start(start_), end(end_) { f64 = value_; while(start_ != end_) { text.push_back(*start_++); };  }
   Token(TokenType type_, const char* start_, const char* end_)
-    : type(type_), start(start_), end(end_) { u64 = 0; }
+    : type(type_), start(start_), end(end_) { u64 = 0; while(start_ != end_) { text.push_back(*start_++); };  }
 
   void dump();
 
@@ -232,6 +232,54 @@ struct Token {
     double     f64;  // 64-bit float.
   };
 
+  //----------
+
+  bool isKeyword(TokenValue which = TV_INVALID) {
+    if (type != TT_KEYWORD) return false;
+    if (which > 0 && value != which) return false;
+    return true;
+  }
+
+  bool isOperator(TokenValue which = TV_INVALID) {
+    if (type != TT_OPERATOR) return false;
+    if (which > 0 && value != which) return false;
+    return true;
+  }
+
+  bool isDelimiter(TokenValue which = TV_INVALID) {
+    if (type != TT_DELIMITER) return false;
+    if (which > 0 && value != which) return false;
+    return true;
+  }
+
+  bool isIdentifier() {
+    return type == TT_IDENTIFIER;
+  }
+
+  bool isLiteral() {
+    if (type == TT_INTEGER) return true;
+    if (type == TT_FLOAT) return true;
+    if (type == TT_RUNE) return true;
+    if (type == TT_STRING) return true;
+    return false;
+  }
+
+  bool isInteger() { return type == TT_INTEGER; }
+  bool isFloat()   { return type == TT_FLOAT; }
+  bool isRune()    { return type == TT_RUNE; }
+  bool isString()  { return type == TT_STRING; }
+
+  bool isDirective() {
+    return type == TT_DIRECTIVE;
+  }
+
+  bool isComment() {
+    return type == TT_COMMENT;
+  }
+
+  //----------
+
   const char* start;
   const char* end;
+  string text;
 };

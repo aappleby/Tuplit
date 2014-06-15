@@ -3,6 +3,7 @@
 
 // Wrapper object around a block of atoms, does _not_ own the atoms.
 
+/*
 struct Tuple {
   Tuple(Atom* atoms, int length) {
     atoms_ = atoms;
@@ -17,10 +18,6 @@ struct Tuple {
   ~Tuple() {
   }
 
-  operator Atom() const {
-    return Atom(PT_TUPLE, NULL, TupleType(length_), atoms_);
-  }
-
   int length() const {
     return length_;
   }
@@ -33,7 +30,7 @@ struct Tuple {
     return atoms_[index];
   }
   
-  const Atom* byName(string* name) {
+  const Atom* byName(string& name) {
     for (int i = 0; i <= length_; i++) {
       if (atoms_[i].name_ == name) {
         return &atoms_[i];
@@ -47,6 +44,12 @@ private:
 
   Tuple() {}
 };
+*/
 
+class Tuple : public std::vector<Atom> {
+public:
+
+  void dump();
+};
 
 void meld(Tuple a, Tuple b);

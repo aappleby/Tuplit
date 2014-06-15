@@ -599,7 +599,6 @@ void Lexer::dump() {
   int depth = 0;
   for (size_t i = 0; i < tokens.size(); i++) {
     Token& t = tokens[i];
-    if (skipComments && t.type == TT_COMMENT) continue;
 
     printf("%4d: ", t.line);
 

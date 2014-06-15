@@ -178,3 +178,9 @@ print(somevec)
 (storage : int* = null, capacity : int = 0, size : int = 0)
 
 a = vector(int).create(10);
+
+
+// token-izing operator?
+foo := 2;
+#"foo" := 2;
+#("f" + "o" + "o") := 2;

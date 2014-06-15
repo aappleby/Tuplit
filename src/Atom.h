@@ -6,8 +6,8 @@
 #pragma warning(disable : 4201)
 
 class Atom;
-struct List;
-struct Tuple;
+class Function;
+class Type;
 
 // The actual machine representation of the data stored in the atom, independent
 // of its declared type.
@@ -21,33 +21,19 @@ enum PhysicalType {
   PT_TEXT,
   PT_TYPE,
   PT_BLOB,
-  PT_VOID
-};
-
-union MetaStuff {
-  uint64_t bytes;
-  struct {
-    uint8_t flags;
-    uint8_t has;
-    uint8_t type;
-    uint8_t stuff1;
-    uint8_t stuff2;
-    uint8_t stuff3;
-    uint8_t stuff4;
-    uint8_t somethingRefCount;
-  };
+  PT_VOID,
+  PT_FUNC,
 };
 
 union ValueStuff {
-  int64_t  s64;
-  uint64_t u64;
-  double   f64;
+  int64_t   s64;
+  uint64_t  u64;
+  double    f64;
 
-  List*    list;
-  Atom*    atom;
-  uint8_t* blob;
-  string*  text;
-  Type*    type;
+  Atom*     atom;
+  uint8_t*  blob;
+  Function* func;
+  Type*     type;
 };
 
 //------------------------------------------------------------------------------
@@ -55,158 +41,244 @@ union ValueStuff {
 class Atom {
 public:
   Atom() {
-    meta_.bytes = 0;
-    meta_.type = PT_NIL;
-    name_ = NULL;
-    type_ = NULL;
+    name_ = "";
+    type_ = "";
+    ptype_ = PT_NIL;
     value_.u64 = 0;
   }
 
-  Atom (MetaStuff meta,
-        string* name,
-        const Type* type,
-        ValueStuff value) {
-    meta_ = meta;
-    name_ = name;
-    type_ = type;
-    value_ = value;
-    updateHas();
-  }
-
-
-  Atom (PhysicalType mtype,
-        std::string* name,
-        const Type* type,
-        Atom* value) {
-    meta_.bytes = 0;
-    meta_.type = mtype;
-    name_ = name;
-    type_ = type;
-    value_.atom = value;
-    updateHas();
-  }
-
-  static Atom nil;
-
   Atom(const Atom& a) {
-    meta_ = a.meta_;
     name_ = a.name_;
     type_ = a.type_;
+    ptype_ = a.ptype_;
     value_ = a.value_;
   }
 
   Atom& operator = (const Atom& a) {
     assert(this != &nil);
-    meta_ = a.meta_;
     name_ = a.name_;
     type_ = a.type_;
+    ptype_ = a.ptype_;
     value_ = a.value_;
     return *this;
   }
 
+  //----------
+
+  Atom(const string& name, const string& type)
+  : name_(name), type_(type), ptype_(PT_NIL) {}
+
+  Atom(const string& name, const string& type, int64_t value, const string& text)
+  : name_(name), type_(type), ptype_(PT_INT), text_(text) { value_.s64 = value; }
+
+  Atom(const string& name, const string& type, uint64_t value, const string& text)
+  : name_(name), type_(type), ptype_(PT_UINT), text_(text) { value_.u64 = value; }
+
+  Atom(const string& name, const string& type, double value, const string& text)
+  : name_(name), type_(type), ptype_(PT_FLOAT), text_(text) { value_.f64 = value; }
+
+  Atom(const string& name, const string& type, const string& text)
+  : name_(name), type_(type), ptype_(PT_TEXT), text_(text) {}
+
+  //----------
+  // Extract name/type/value of atoms.
+
+  static Atom name(const Atom& a) {
+    Atom result;
+    result.name_ = a.name_;
+    return result;
+  }
+
+  static Atom type(const Atom& a) {
+    Atom result;
+    result.type_ = a.type_;
+    return result;
+  }
+
+  static Atom value(const Atom& a) {
+    Atom result;
+    result.ptype_ = a.ptype_;
+    result.value_.u64 = a.value_.u64;
+    result.text_ = a.text_;
+    return result;
+  }
+
+  static Atom make_type(const char* name, Type* value = NULL) {
+    Atom result;
+    result.name_ = name;
+    result.type_ = "<type>";
+    result.ptype_ = PT_TYPE;
+    result.value_.type = value;
+    return result;
+  }
+
+  //----------
+  // Construct partial atoms.
+
+  static Atom name(const char* name) {
+    Atom result;
+    result.name_ = name;
+    return result;
+  }
+
+  static Atom name(string& name) {
+    Atom result;
+    result.name_ = name;
+    return result;
+  }
+
+  static Atom type(string& type) {
+    return Atom("", type);
+  }
+
+  static Atom value(int64_t value) {
+    return Atom("", "int", value, "");
+  }
+
+  static Atom value(double value) {
+    return Atom("", "float", value, "");
+  }
+
+  static Atom value(string& value) {
+    return Atom("", "string", value);
+  }
+
+  // Symbolic token, 
+  static Atom symbol(string& type) {
+    return Atom("<symbol>", type);
+  }
+
+  //----------
+
   bool isNil() const {
-    return this == &nil;
+    return ptype_ == PT_NIL;
+  }
+
+  bool isFunction() const {
+    return ptype_ == PT_FUNC;
+  }
+
+  bool isType() const {
+    return ptype_ == PT_TYPE;
+  }
+
+  bool isSymbol() const {
+    return name_ == "<symbol>";
   }
 
   //----------
   // Conversions from Tuplit types
 
-  // An atom pointing at another atom is a tuple of length 1.
-  explicit Atom(Atom* v) {
-    meta_.bytes = 0;
-    meta_.type = PT_TUPLE;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = Type::tuple1;
-    value_.atom = v;
-  }
-
-  explicit Atom(List* v) {
-    meta_.bytes = 0;
-    meta_.type = PT_LIST;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = NULL;
-    value_.list = v;
-  }
-
   explicit Atom(uint8_t* v) {
-    meta_.bytes = 0;
-    meta_.type = PT_BLOB;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = NULL;
+    name_ = "";
+    type_ = "";
+    ptype_ = PT_BLOB;
     value_.blob = v;
   }
 
-  explicit Atom(std::string* v) {
-    meta_.bytes = 0;
-    meta_.type = PT_TEXT;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = NULL;
-    value_.text = v;
+  explicit Atom(string& v) {
+    name_ = "";
+    type_ = "";
+    ptype_ = PT_TEXT;
+    value_.u64 = 0;
+    text_ = v;
+  }
+
+  explicit Atom(Function* f) {
+    name_ = "";
+    type_ = "function";
+    ptype_ = PT_FUNC;
+    value_.func = f;
   }
 
   //-----------
   // Conversions from base types
 
   explicit Atom(int32_t v) {
-    meta_.bytes = 0;
-    meta_.type = PT_INT;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = NULL;
+    name_ = "";
+    type_ = "int32";
+    ptype_ = PT_INT;
     value_.s64 = v;
   }
 
   explicit Atom(int64_t v) {
-    meta_.bytes = 0;
-    meta_.type = PT_INT;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = NULL;
+    name_ = "";
+    type_ = "int64";
+    ptype_ = PT_INT;
     value_.s64 = v;
   }
 
   explicit Atom(double v) {
-    meta_.bytes = 0;
-    meta_.type = PT_FLOAT;
-    meta_.has = AH_VALUE;
-    name_ = NULL;
-    type_ = NULL;
+    name_ = "";
+    type_ = "double";
+    ptype_ = PT_FLOAT;
     value_.f64 = v;
+  }
+
+  //-----------
+  // Copy/merge from another atom.
+
+  void setName(Atom const& a) {
+    name_ = a.name_;
+  }
+
+  void setType(Atom const& a) {
+    type_ = a.type_;
+  }
+
+  void setValue(Atom const& a) {
+    ptype_ = a.ptype_;
+    value_.u64 = a.value_.u64;
+    text_ = a.text_;
   }
 
   //-----------
 
   void setInt(int v) {
-    assert(meta_.type == PT_INT);
+    assert(ptype_ == PT_INT);
     value_.s64 = v;
   }
 
   int getInt() {
-    assert(meta_.type == PT_INT);
+    assert(ptype_ == PT_INT);
     return static_cast<int>(value_.s64);
   }
 
-  void updateHas() {
-    meta_.has = 0;
-    if (name_) meta_.has |= AH_NAME;
-    if (type_) meta_.has |= AH_TYPE;
-    if (meta_.type) meta_.has |= AH_VALUE;
-  }
+  //-----------
+
+  void dump() {
+    switch(ptype_) {
+      case PT_FLOAT:
+        {
+          string s = name_.empty() ? "?" : name_;
+          printf("%s : %s = %f", s.c_str(), type_.c_str(), value_.f64);
+        }
+        break;
+      case PT_TEXT:
+        printf("%s : %s = %s", name_.c_str(), type_.c_str(), text_.c_str());
+        break;
+      default:
+        printf("<unknown>");
+        break;
+    }
+  };
+
+  //-----------
+  // Global constant atoms;
+
+  static const Atom nil;
 
 //private:
 
-  enum AtomHas {
-    AH_NAME = 1,
-    AH_TYPE = 2,
-    AH_VALUE = 4,
-  };
+  // True if this is a symbolic atom - it represents the result of a
+  // symbolic computation and not an actual computation.
+  bool          symbol_;
 
-  MetaStuff     meta_;
-  std::string*  name_;
-  const Type*   type_;
+  std::string   name_;
+  std::string   type_;
+  PhysicalType  ptype_;
   ValueStuff    value_;
+  string        text_;
 };
+
+typedef std::map<string, Atom> AtomMap;

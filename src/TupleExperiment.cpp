@@ -34,15 +34,14 @@ int main(int /*argc*/, char* /*argv[]*/)
   std::string code((std::istreambuf_iterator<char>(ifs)),
                     std::istreambuf_iterator<char>());
 
-  Lexer l;
-  l.setSkipComments(true);
-  l.lex(code);
+  Parser p;
+  p.lex.lex(code);
+  p.lex.stripComments();
 
-  l.dump();
+  p.lex.dump();
   printf("----------\n");
 
-  Parser p;
-  p.parse(&l);
+  p.parse();
 
   p.dump();
   printf("----------\n");

@@ -175,6 +175,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\generator_and_function_thoughts.h"
+				>
+			</File>
+			<File
 				RelativePath="..\LuaGrammar.h"
 				>
 			</File>
@@ -188,6 +192,10 @@
 			</File>
 			<File
 				RelativePath="..\ToyLanguage2.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Tuplit.bnf.h"
 				>
 			</File>
 		</Filter>
@@ -256,6 +264,14 @@
 			</File>
 			<File
 				RelativePath="..\src\Base.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Function.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Function.h"
 				>
 			</File>
 			<File

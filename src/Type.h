@@ -1,7 +1,9 @@
 #pragma once
+#include "Base.h"
 
 
-struct Type {
+class Type {
+public:
   const char* name;
   int dimensions;
   int length;
@@ -13,8 +15,10 @@ struct Type {
   static const Type* tuple2;
   static const Type* tuple3;
   static const Type* tuple4;
+
+  static const Type* func;
 };
 
-const Type* TupleType(int length);
+string TupleType(int length);
 
-int TupleLength(const Type* type);
+int TupleLength(const string& t);

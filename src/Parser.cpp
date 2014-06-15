@@ -1,4 +1,17 @@
 #include "Parser.h"
+#include "Function.h"
+
+Parser::Parser() {
+  stackBase = 0;
+  localTop = 0;
+
+  currentFunction = new Function();
+
+  // Add native types to the global namespace.
+
+  globals["float"] = Atom::make_type("float");
+  globals["int"] = Atom::make_type("int");
+}
 
 bool isNativeType() {
   return false;
@@ -7,7 +20,7 @@ bool isNativeType() {
 //-----------------------------------------------------------------------------
 
 ParseStatus Parser::skipExpected(TokenType type, TokenValue value) {
-  Token t = lex->get();
+  Token t = lex[0];
   if (t.type != type) {
     assert(false);
     return PARSE_BADSEQUENCE;
@@ -16,6 +29,21 @@ ParseStatus Parser::skipExpected(TokenType type, TokenValue value) {
     assert(false);
     return PARSE_BADSEQUENCE;
   }
+  lex++;
+  return PARSE_OK;
+}
+
+//----------
+
+ParseStatus Parser::skipOptional(TokenType type, TokenValue value) {
+  Token t = lex[0];
+  if (t.type != type) {
+    return PARSE_OK;
+  }
+  if (t.value != value) {
+    return PARSE_OK;
+  }
+  lex++;
   return PARSE_OK;
 }
 
@@ -30,7 +58,14 @@ int Parser::jumpTo(int pc) {
 }
 
 int Parser::emit(Opcode op, int regA, int regB) {
-  return 0;
+  Instruction o = { op, regA, regB };
+  currentFunction->code.push_back(o);
+  return PARSE_OK;
+}
+
+int Parser::addConstant(Atom const& c) {
+  currentFunction->constants.push_back(c);
+  return PARSE_OK;
 }
 
 int Parser::getPC() {
@@ -52,11 +87,6 @@ DECLARE
 //     b = c
 //     b
 //         c
-int Parser::parseAtom() {
-  Token a = lex->next();
-  push(new ParseNode(PN_ID, a));
-  return PARSE_OK;
-}
 
 
 // a : b
@@ -68,8 +98,114 @@ int Parser::parseLhsAtom() {
 
 //-----------------------------------------------------------------------------
 
+int Parser::parseAtom() {
+  Token t = lex[0];
+
+  Atom temp;
+
+  bool hasName = false;
+  bool hasType = false;
+  bool hasValue = false;
+
+  if (t.isIdentifier()) {
+    // (a | (b
+    // Could be name, type, or function call.
+    // Don't bother handling function call for now.
+
+    // See if the identifier matches a known type.
+    Atom resolved = resolve(t.text);
+
+    if (resolved.isType()) {
+      // must be type
+      temp.type_ = resolved.name_;
+      hasType = true;
+    } else {
+      // must be name
+      temp.name_ = t.text;
+      hasName = true;
+    }
+  } else if (t.isLiteral()) {
+    // (c)
+  }
+
+  // First piece done.
+
+  lex++;
+  t = lex[0];
+
+  // If the next token is a delimiter, that's the end of the atom.
+  if (t.isDelimiter()) {
+    stack.push_back(temp);
+    return PARSE_OK;
+  }
+
+  if (t.isOperator(OP_DECLARE)) {
+    // (a := c)
+    parseExpression();
+    temp.setValue(stack.back());
+    stack.pop_back();
+    return PARSE_OK;
+  }
+
+  if (t.isOperator(OP_EQUALS)) {
+    assert(!hasName);
+    assert(hasType);
+    // (b = c)
+    parseExpression();
+    temp.setValue(stack.back());
+    stack.pop_back();
+    return PARSE_OK;
+  }
+
+  if (t.isOperator(OP_COLON)) {
+    // a : b
+    assert(hasName);
+    assert(!hasType);
+    lex++;
+    Token b = lex[0];
+    temp.type_ = b.text;
+    hasType = true;
+    lex++;
+
+    t = lex[0];
+    if (!t.isOperator(OP_EQUALS)) {
+      assert(false);
+    }
+
+    lex++;
+    parseExpression();
+    temp.setValue(stack.back());
+    stack.pop_back();
+    return PARSE_OK;
+  }
+
+  assert(false);
+  return PARSE_ERROR;
+}
+
+//-----------------------------------------------------------------------------
+// ( <atom>, ... )
+
+int Parser::parseTuple() {
+  skipExpected(TT_DELIMITER, DL_LPAREN);
+
+  while(lex[0].type != TT_DELIMITER || lex[0].value != DL_LPAREN) {
+    parseAtom();
+    // Every atom should be followed by a delimiter.
+    if (lex[0].type != TT_DELIMITER) {
+      assert(false);
+      return PARSE_ERROR;
+    }
+    skipOptional(TT_DELIMITER, DL_COMMA);
+  }
+
+  return PARSE_OK;
+}
+
+//-----------------------------------------------------------------------------
+
 int Parser::parseLhs() {
-  Token t = lex->get();  
+  Token t = lex[0];  
 
   if (t.type == TT_IDENTIFIER) {
     return parseAtom();
@@ -88,14 +224,38 @@ int Parser::parseLhs() {
 // Returns register containing eval result.
 
 int Parser::parseExpression() {
-  Token lhs = lex->next();
+  Token t = lex[0];
+
+  if (t.isLiteral()) {
+    // TODO(aappleby): handle expression
+    switch (t.type) {
+      case TT_INTEGER:
+        stack.push_back(Atom::value(t.s64));
+        lex++;
+        return PARSE_OK;
+      case TT_FLOAT:
+        stack.push_back(Atom::value(t.f64));
+        lex++;
+        return PARSE_OK;
+      case TT_STRING:
+        stack.push_back(Atom::value(t.text));
+        lex++;
+        return PARSE_OK;
+      case TT_RUNE:
+      default:
+        assert(false);
+    }
+  }
+
+  /*
+  Token lhs = lex[0];
 
   if (lhs.type != TT_IDENTIFIER) {
     printf("X!");
     return PARSE_OK;
   }
 
-  Token op = lex->next();
+  Token op = lex++;
 
   assert(op.type == TT_OPERATOR);
   switch(op.value) {
@@ -109,14 +269,261 @@ int Parser::parseExpression() {
     assert(false);
     return PARSE_BADSEQUENCE;
   }
+  */
 
   return PARSE_OK;
 }
 
 //-----------------------------------------------------------------------------
-// Lexer is on the lparen of the args.
 
-int Parser::parseCall(Token functionName) {
+Atom Parser::resolve(string& name) {
+  // TODO(aappleby) - Walk the scope and context chains here.
+  for (int i = stackBase; i < localTop; i++) {
+    if (stack[i].name_ == name) {
+      return stack[i];
+    }
+  }
+
+  AtomMap::iterator it = globals.find(name);
+  if (it != globals.end()) {
+    return (*it).second;
+  }
+
+  return Atom::nil;
+}
+
+//-----------------------------------------------------------------------------
+
+int Parser::allocateVariable(string& name) {
+  stack.push_back(Atom::name(name));
+  return localTop++;
+}
+
+//-----------------------------------------------------------------------------
+// <literal_expression>
+
+int Parser::evalLiteral() {
+  Token base = lex[0];
+  Token op = lex[1];
+
+  assert(op.isDelimiter(DL_SEMICOLON));
+
+  switch(base.type) {
+    case TT_KEYWORD:
+      // put 'true' or 'false' on stack.
+      return PARSE_OK;
+
+    case TT_NATIVE:
+      // put type on stack.
+      return PARSE_OK;
+
+    case TT_IDENTIFIER:
+      // look up identifier & put on stack.
+      return PARSE_OK;
+
+    case TT_INTEGER:
+      stack.push_back(Atom::value(base.s64));
+      break;
+    case TT_FLOAT:
+      {
+        Atom constant = Atom::value(base.f64);
+        int cslot = addConstant(constant);
+        stack.push_back(constant);
+        emit(OC_LOADC, stack.size() - 1, currentFunction->constants.size() - 1);
+        lex += 2;
+      }
+      break;
+    case TT_RUNE:
+    case TT_STRING:
+      // put literal on stack.
+      return PARSE_OK;
+
+    case TT_EOF:
+    case TT_INVALID:
+    case TT_OPERATOR:
+    case TT_DELIMITER:
+    case TT_DIRECTIVE:
+    case TT_COMMENT:
+    default:
+      assert(false);
+      return PARSE_ERROR;
+  };
+
+  return PARSE_OK;
+}
+
+//-----------------------------------------------------------------------------
+// function () -> () {}
+
+// TODO(aappleby): Support arbitrary lists of tuples, blocks, and bare words
+// as function arguments.
+
+int Parser::parseFunction() {
+  assert(lex[0].type == TT_KEYWORD && lex[0].value == KW_FUNCTION);
+  lex++;
+
+  int error = parseTuple();
+  if (error) return error;
+
+  assert(lex[0].type == TT_OPERATOR && lex[0].value == OP_RARROW);
+  error = parseTuple();
+  if (error) return error;
+
+  error = parseBlock();
+  if (error) return error;
+
+  // Args, result, and block are on the stack.
+  // Create a new function to hold them and push it on the stack.
+  assert(false);
+  
+  return PARSE_OK;
+}
+
+//-----------------------------------------------------------------------------
+// function(), literal, (tuple), call(), expression
+
+int Parser::evalExpression() {
+  Token base = lex[0];
+  Token op = lex[1];
+
+  if (op.isDelimiter(DL_SEMICOLON)) {
+    // either "literal;" or "identifier;"
+    return evalLiteral();
+  }
+
+  if (base.isKeyword(KW_FUNCTION)) {
+    return parseFunction();
+  }
+
+  if (base.isDelimiter(DL_LPAREN)) {
+    // Tuple
+    return parseTuple();
+  }
+
+  if (base.isDelimiter(DL_LBRACE)) {
+    return parseBlock();
+  }
+
+  switch(base.type) {
+    case TT_EOF:
+      // Something's broken.
+      assert(false);
+      break;
+    case TT_INVALID:
+      // Something's broken.
+      assert(false);
+      break;
+
+    case TT_OPERATOR:
+      // Unary operator
+      assert(false);
+      break;
+    case TT_DELIMITER:
+      // Tuple, array literal, block literal.
+      assert(false);
+      break;
+
+    case TT_NATIVE:
+      // Static cast to native type.
+      assert(false);
+      break;
+
+    case TT_IDENTIFIER:
+      // Function call or copy from variable.
+      assert(false);
+
+    case TT_INTEGER:
+      // Expression starting with integer.
+      assert(false);
+
+    case TT_FLOAT:
+      assert(false);
+    case TT_RUNE:
+      assert(false);
+    case TT_STRING:
+      assert(false);
+    case TT_DIRECTIVE:
+      assert(false);
+    case TT_COMMENT:
+      assert(false);
+  }
+
+  assert(false);
+  return PARSE_ERROR;
+}
+
+//-----------------------------------------------------------------------------
+// "<identifier> := <expression>"
+// "<identifier> := <expression>"
+// "<identifier> := <expression>"
+// "<identifier> : <type> = <expression>"
+
+int Parser::parseDecl() {
+  Token& name = lex[0];
+  assert(name.isIdentifier());
+  assert(resolve(name.text).isNil());
+  int slot = allocateVariable(name.text);
+  stack[slot].name_ = name.text;
+
+  if (lex[1].isOperator(OP_DECLARE))
+  {
+    evalExpression();
+    stack[slot].type_ = stack.back().type_;
+    emit(OC_MOVV, slot, stack.size() - 1);
+    stack.pop_back();
+    return PARSE_OK;
+  }
+  else if (lex[1].isOperator(OP_COLON))
+  {
+    // Resolve the type expression.
+    Atom type = resolve(lex[2].text);
+    assert(!type.isNil());
+    stack[slot].type_ = type.name_;
+
+    // Skip the equals sign.
+    assert(lex[3].isOperator(OP_EQUALS));
+    lex += 4;
+
+    // Eval the expression. The expression type result should match the
+    // declared type of the atom.
+    evalExpression();
+    assert(stack.back().type_ == type.name_);
+
+    // TODO(aappleby): If the result isn't a symbol, the value should go
+    // into the constant pool.
+
+    // Move the expression value to the slot.
+    stack[slot].setValue(stack.back());
+    emit(OC_MOVV, slot, stack.size() - 1);
+    stack.pop_back();
+    emit(OC_POP, 1);
+    return PARSE_OK;
+  }
+  else
+  {
+    assert(false);
+    return PARSE_ERROR;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// "x(...);" or "x(...) {};"
+
+// TODO - add support for non-delimited args
+
+int Parser::parseCall() {
+  Token& name = lex[0];
+  Token& lparen = lex[1];
+
+  assert(name.type == TT_IDENTIFIER);
+  assert(lparen.type == TT_DELIMITER && lparen.value == DL_LPAREN);
+
+  Atom f = resolve(name.text);
+  if (f.isNil()) {
+    // Couldn't resolve function call name.
+    return -1;
+  }
+
   return 0;
 }
 
@@ -124,15 +531,20 @@ int Parser::parseCall(Token functionName) {
 // "x = 10", "x := 10", "x()"
 
 int Parser::parseCallOrDecl() {
-  Token name = lex->next();
-  Token op = lex->peek();
+  Token name = lex[0];
+  Token op = lex[1];
 
-  assert(name.type == TT_IDENTIFIER);
-  assert((op.type == TT_OPERATOR) || (op.type == TT_DELIMITER));
+  assert(name.isIdentifier());
+  assert(op.isOperator() || op.isDelimiter());
 
-  if (op.type == TT_DELIMITER) {
-    assert(op.value == DL_LPAREN);
+  if (op.isDelimiter()) {
+    assert(op.isDelimiter(DL_LPAREN));
     // Function call.
+    return parseCall();
+  }
+
+  if (op.isOperator(OP_DECLARE) | op.isOperator(OP_COLON)) {
+    return parseDecl();
   }
 
 
@@ -142,8 +554,8 @@ int Parser::parseCallOrDecl() {
 //-----------------------------------------------------------------------------
 
 int Parser::parseStatement() {
-  Token t = lex->get();
-  if (t.type == TT_KEYWORD) {
+  Token t = lex[0];
+  if (t.isKeyword()) {
     switch(t.value) {
       case KW_WHILE:
         return parseWhile();
@@ -178,7 +590,7 @@ int Parser::parseStatement() {
         return PARSE_BADSEQUENCE;
     }
     return PARSE_OK;
-  } else if (t.type == TT_IDENTIFIER) {
+  } else if (t.isIdentifier()) {
     return parseCallOrDecl();
   }
   else {
@@ -189,7 +601,9 @@ int Parser::parseStatement() {
 //-----------------------------------------------------------------------------
 
 int Parser::parseStatementList() {
-  while(lex->peek().type != TT_DELIMITER || lex->peek().value != DL_RBRACE) {
+  // Keep parsing statements until we see a right brace.
+  while(lex[0].type != TT_DELIMITER ||
+        lex[0].value != DL_RBRACE) {
     int error = parseStatement();
     if (error) return error;
   }
@@ -220,13 +634,13 @@ int Parser::closeBlock() {
 int Parser::parseConditional() {
   // open paren block
   skipExpected(TT_DELIMITER, DL_LPAREN);
-  int stackStart = stackTop;
+  int stackStart = localTop;
   openBlock();
   parseBlock();
   closeBlock();
-  int resultreg = stackTop - 1;
+  int resultreg = localTop - 1;
   skipExpected(TT_DELIMITER, DL_RPAREN);
-  stackTop = stackStart;
+  localTop = stackStart;
   return resultreg;
 }
 
@@ -234,7 +648,7 @@ int Parser::parseConditional() {
 
 int Parser::parseWhile() {
   // skip 'while' token
-  lex->next();
+  lex++;
 
   // store pc 
   int whilestart = getPC();
@@ -259,14 +673,9 @@ int Parser::parseWhile() {
 
 //-----------------------------------------------------------------------------
 
-int Parser::parse(Lexer* lex_) {
-  lex = lex_;
-  while(lex->peek().type != TT_EOF) {
+int Parser::parse() {
+  while(!lex.isEOF()) {
     parseStatement();
-    if (!stack.empty()) {
-      expressions.push_back(stack.back());
-      stack.pop_back();
-    }
   }
   return PARSE_OK;
 }
@@ -274,8 +683,10 @@ int Parser::parse(Lexer* lex_) {
 //-----------------------------------------------------------------------------
 
 void Parser::dump() {
+  currentFunction->dump();
 }
 
+/*
 void Parser::dumpNode(ParseNode* node, int depth) {
   ParseNode* cursor = node;
 
@@ -284,6 +695,7 @@ void Parser::dumpNode(ParseNode* node, int depth) {
     cursor = cursor->next;
   }
 }
+*/
 
 
 

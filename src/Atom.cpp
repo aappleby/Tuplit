@@ -1,3 +1,3 @@
 #include "Atom.h"
 
-Atom Atom::nil = Atom();
+const Atom Atom::nil = Atom();

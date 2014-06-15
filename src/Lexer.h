@@ -32,10 +32,6 @@ public:
   };
   int lex(std::string& code);
 
-  void setSkipComments(bool skip) {
-    skipComments_ = skip;
-  }
-
   void dump();
 
   void reset() {
@@ -54,34 +50,39 @@ public:
 
   void start() {
     read_cursor = 0;
-    skipComments(read_cursor);
   }
 
-  Token get() {
-    return tokens[read_cursor];
+  Token operator[](int offset) {
+    return tokens[read_cursor + offset];
   }
 
-  Token peek(int distance) {
-    int cursor = read_cursor;
-    for (int i = 0; i < distance; i++) {
-      skipComments(cursor);
-      cursor++;
-    }
-    skipComments(cursor);
-    return tokens[cursor];
-  }
-
-  Token next() {
-    Token t = get();
+  void operator++(int) {
     read_cursor++;
-    skipComments(read_cursor);
-    return t;
+  }
+  void operator += (int offset) {
+    read_cursor += offset;
   }
 
-  void skipComments(int& cursor) {
-    while (skipComments_ && (tokens[cursor].type == TT_COMMENT)) {
-      cursor++;
+  Token get(int offset = 0) {
+    return tokens[read_cursor + offset];
+  }
+
+  Token next(int offset = 1) {
+    read_cursor += offset;
+    return get(read_cursor);
+  }
+
+  void stripComments(void) {
+    std::vector<Token> newTokens;
+    for (size_t i = 0; i < tokens.size(); i++) {
+      Token& t = tokens[i];
+      if (t.type != TT_COMMENT) newTokens.push_back(t);
     }
+    tokens.swap(newTokens);
+  }
+
+  bool isEOF() {
+    return tokens[read_cursor].type == TT_EOF;
   }
   
 protected:
