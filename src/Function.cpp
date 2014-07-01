@@ -4,19 +4,19 @@
 void Function::dump() {
   printf("Function %s\n", name.c_str());
 
-  printf("Constants: ");
+  printf("Constants:\n");
   constants.dump();
   printf("\n");
 
-  printf("Args: ");
+  printf("Args:\n");
   args.dump();
   printf("\n");
 
-  printf("Locals: ");
+  printf("Locals:\n");
   locals.dump();
   printf("\n");
 
-  printf("Results: ");
+  printf("Results:\n");
   results.dump();
   printf("\n");
 }

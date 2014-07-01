@@ -45,6 +45,7 @@ public:
     type_ = "";
     ptype_ = PT_NIL;
     value_.u64 = 0;
+    text_ = "";
   }
 
   Atom(const Atom& a) {
@@ -52,6 +53,7 @@ public:
     type_ = a.type_;
     ptype_ = a.ptype_;
     value_ = a.value_;
+    text_ = a.text_;
   }
 
   Atom& operator = (const Atom& a) {
@@ -60,6 +62,7 @@ public:
     type_ = a.type_;
     ptype_ = a.ptype_;
     value_ = a.value_;
+    text_ = a.text_;
     return *this;
   }
 
@@ -234,6 +237,12 @@ public:
 
   //-----------
 
+  void setName(std::string const& name) {
+    name_ = name;
+  }
+
+  //-----------
+
   void setInt(int v) {
     assert(ptype_ == PT_INT);
     value_.s64 = v;
@@ -246,22 +255,7 @@ public:
 
   //-----------
 
-  void dump() {
-    switch(ptype_) {
-      case PT_FLOAT:
-        {
-          string s = name_.empty() ? "?" : name_;
-          printf("%s : %s = %f", s.c_str(), type_.c_str(), value_.f64);
-        }
-        break;
-      case PT_TEXT:
-        printf("%s : %s = %s", name_.c_str(), type_.c_str(), text_.c_str());
-        break;
-      default:
-        printf("<unknown>");
-        break;
-    }
-  };
+  void dump();
 
   //-----------
   // Global constant atoms;
@@ -272,7 +266,7 @@ public:
 
   // True if this is a symbolic atom - it represents the result of a
   // symbolic computation and not an actual computation.
-  bool          symbol_;
+  //bool          symbol_;
 
   std::string   name_;
   std::string   type_;

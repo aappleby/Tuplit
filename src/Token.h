@@ -232,6 +232,18 @@ struct Token {
     double     f64;  // 64-bit float.
   };
 
+  bool operator == (TokenValue value2) const {
+    return value == value2;
+  }
+
+  bool operator != (TokenValue value2) const {
+    return value != value2;
+  }
+
+  bool operator < (TokenValue value2) const {
+    return value < value2;
+  }
+
   //----------
 
   bool isKeyword(TokenValue which = TV_INVALID) {

@@ -101,7 +101,7 @@ class Parser {
 public:
   Parser();
 
-  int parse();
+  ParseStatus parse();
 
   void dump();
 
@@ -118,7 +118,9 @@ private:
 
   int getPC();
 
-  int emit (Opcode op, int regA, int regB = 0);
+  ParseStatus emit (Opcode op, int regA, int regB = 0);
+
+  ParseStatus emitEval();
 
   int jumpTo(int pc);
   int patchJumpFrom (int pc);
@@ -126,40 +128,43 @@ private:
   int allocateVariable(string& name);
   int addConstant(const Atom& c);
 
-  int evalLiteral();
-  int evalExpression();
+  ParseStatus evalLiteral();
+  ParseStatus evalExpression();
+
+  ParseStatus pushSymbol(Token& t);
+  ParseStatus pushOperator(Token& t);
+  ParseStatus popOperator();
 
   // Parse methods consume tokens and place code pieces on the stack.
 
-  int parseAtom();
-  int parseTuple();
+  ParseStatus parseAtom();
+  ParseStatus parseTuple();
 
-  int parseFunction();
+  ParseStatus parseFunction();
 
-  int parseCall();
-  int parseDecl();
-  int parseCallOrDecl();
+  ParseStatus parseCall();
+  ParseStatus parseDecl();
+  ParseStatus parseCallOrDecl();
 
-  int parseLhsAtom();
-  int parseLhs();
-  int parseRhs();
+  ParseStatus parseLhsAtom();
+  ParseStatus parseLhs();
+  ParseStatus parseRhs();
 
-  int parseExpression();
+  ParseStatus parseExpression();
 
-  int parseStatementList();
-  int parseStatement();
+  ParseStatus parseStatementList();
+  ParseStatus parseStatement();
 
   // foo.bar.baz.glomp.stuff = ...
-  int parsePath();
+  ParseStatus parsePath();
 
-  int parseConditional();
-  int parseWhile();
+  ParseStatus parseConditional();
+  ParseStatus parseWhile();
 
-  int openBlock();
-  int parseBlock();
-  int closeBlock();
+  ParseStatus openBlock();
+  ParseStatus parseBlock();
+  ParseStatus closeBlock();
 
-  std::vector<Atom> constants;
   std::vector<Atom> stack;
   // The start of the current stack frame.
   int stackBase;
@@ -168,6 +173,8 @@ private:
   int localTop;
 
   Function* currentFunction;
+
+  std::vector<Token> op_stack;
 
   //std::vector<ParseNode*> stack;
   //std::vector<ParseNode*> expressions;

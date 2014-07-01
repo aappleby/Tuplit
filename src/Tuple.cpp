@@ -1,12 +1,14 @@
 #include "Tuple.h"
 
 void Tuple::dump() {
-  printf("(");
-  for (int i = 0; i < size(); i++) {
+  printf("(\n");
+  for (size_t i = 0; i < size(); i++) {
+    printf("  ");
     at(i).dump();
     if (i != size() - 1) printf(",");
+    printf("\n");
   }
-  printf(")");
+  printf(")\n");
 };
 
 void meld(Tuple a, Tuple b) {
