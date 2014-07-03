@@ -39,11 +39,16 @@ int main(int /*argc*/, char* /*argv[]*/)
   p.lex.stripComments();
 
   p.lex.dump();
+
+  printf("\n");
   printf("----------\n");
 
   p.parse();
 
+  printf("\n");
+  printf("----------\n");
   p.dump();
+  printf("\n");
   printf("----------\n");
 
   return 0;

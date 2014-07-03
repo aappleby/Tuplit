@@ -1,12 +1,12 @@
-sum : int32 = 1 + 1;
+foo := 10;
+sum : int32 = ((1 + 1) * (4 + 87));
 stoplexing
-
 
 implied_int := 3;
 implied_float := 4.1;
 implied_string := "five";
-two : int = 2;
-pi : float = 3.1415926535897932384626433832795028814971;
+two : int32 = 2;
+pi : float32 = 3.1415926535897932384626433832795028814971;
 cheese : string = "delicious";
 stoplexing
 

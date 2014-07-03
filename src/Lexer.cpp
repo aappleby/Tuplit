@@ -2,7 +2,7 @@
 
 #include "Token.h"
 
-#include <assert.h>
+//#include <assert.h>
 #include <math.h>
 #include <string>
 

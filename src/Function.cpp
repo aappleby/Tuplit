@@ -19,4 +19,14 @@ void Function::dump() {
   printf("Results:\n");
   results.dump();
   printf("\n");
+
+  printf("Code:\n");
+  dumpCode();
+}
+
+void Function::dumpCode() {
+  for (size_t i = 0; i < code.size(); i++) {
+    Instruction& c = code[i];
+    printf("%-9s %3d,%3d,%3d\n",opcodeStrings[c.opcode], c.ra, c.rb, c.rc);
+  }
 }

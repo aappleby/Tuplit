@@ -107,6 +107,8 @@ enum Opcode {
   OC_PRINTC, // printf("%s",toString(ra.value));
 };
 
+extern const char* opcodeStrings[];
+
 struct Instruction {
   Opcode opcode;
   int ra;

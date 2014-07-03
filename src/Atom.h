@@ -71,11 +71,17 @@ public:
   Atom(const string& name, const string& type)
   : name_(name), type_(type), ptype_(PT_NIL) {}
 
+  Atom(const string& name, const string& type, int32_t value, const string& text)
+  : name_(name), type_(type), ptype_(PT_INT), text_(text) { value_.s64 = value; }
+
   Atom(const string& name, const string& type, int64_t value, const string& text)
   : name_(name), type_(type), ptype_(PT_INT), text_(text) { value_.s64 = value; }
 
   Atom(const string& name, const string& type, uint64_t value, const string& text)
   : name_(name), type_(type), ptype_(PT_UINT), text_(text) { value_.u64 = value; }
+
+  Atom(const string& name, const string& type, float value, const string& text)
+  : name_(name), type_(type), ptype_(PT_FLOAT), text_(text) { value_.f64 = value; }
 
   Atom(const string& name, const string& type, double value, const string& text)
   : name_(name), type_(type), ptype_(PT_FLOAT), text_(text) { value_.f64 = value; }
@@ -134,12 +140,20 @@ public:
     return Atom("", type);
   }
 
+  static Atom value(int32_t value) {
+    return Atom("", "int32", value, "");
+  }
+
   static Atom value(int64_t value) {
-    return Atom("", "int", value, "");
+    return Atom("", "int64", value, "");
+  }
+
+  static Atom value(float value) {
+    return Atom("", "float32", value, "");
   }
 
   static Atom value(double value) {
-    return Atom("", "float", value, "");
+    return Atom("", "float64", value, "");
   }
 
   static Atom value(string& value) {

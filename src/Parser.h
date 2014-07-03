@@ -97,6 +97,50 @@ class Module {
 
 //-----------------------------------------------------------------------------
 
+class AtomStack : public std::vector<Atom> {
+public:
+  AtomStack() {};
+
+  Atom& operator [] (int index) {
+    if (index < 0) index = size() + index;
+    return std::vector<Atom>::operator[](index);
+  }
+
+  void push(Atom& a) {
+    push_back(a);
+  }
+
+  Atom pop() {
+    Atom result = back();
+    pop_back();
+    return result;
+  }
+};
+
+//----------
+
+class TokenStack : public std::vector<Token> {
+public:
+  TokenStack() {};
+
+  Token& operator [] (int index) {
+    if (index < 0) index = size() + index;
+    return std::vector<Token>::operator[](index);
+  }
+
+  void push(Token& t) {
+    push_back(t);
+  }
+
+  Token pop() {
+    Token result = back();
+    pop_back();
+    return result;
+  }
+};
+
+//-----------------------------------------------------------------------------
+
 class Parser {
 public:
   Parser();
@@ -165,7 +209,7 @@ private:
   ParseStatus parseBlock();
   ParseStatus closeBlock();
 
-  std::vector<Atom> stack;
+  AtomStack stack;
   // The start of the current stack frame.
   int stackBase;
 
@@ -174,7 +218,7 @@ private:
 
   Function* currentFunction;
 
-  std::vector<Token> op_stack;
+  TokenStack op_stack;
 
   //std::vector<ParseNode*> stack;
   //std::vector<ParseNode*> expressions;

@@ -20,7 +20,7 @@ namespace std {
 #include <string>
 #include <vector>
 #include <map>
-#include <assert.h>
+//#include <assert.h>
 #include "stdint.h"
 
 using std::string;
@@ -28,3 +28,5 @@ using std::map;
 using std::vector;
 
 vector<string> split(const string &s, char delim);
+
+#define assert(x) { bool cond = x; if (!cond) { printf("Assertion failed - '" #x "'"); __debugbreak();}  }

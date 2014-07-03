@@ -11,7 +11,11 @@ Parser::Parser() {
   // Add native types to the global namespace.
 
   globals["float32"] = Atom::make_type("float32");
+  globals["float64"] = Atom::make_type("float64");
   globals["int32"] = Atom::make_type("int32");
+  globals["int64"] = Atom::make_type("int64");
+  globals["uint32"] = Atom::make_type("uint32");
+  globals["uint64"] = Atom::make_type("uint64");
   globals["string"] = Atom::make_type("string");
 }
 
@@ -61,11 +65,23 @@ int Parser::jumpTo(int pc) {
 
 ParseStatus Parser::emit(Opcode op, int regA, int regB) {
   Instruction o = { op, regA, regB };
+  printf("%-9s %3d,%3d,%3d\n",opcodeStrings[o.opcode], o.ra, o.rb, o.rc);
   currentFunction->code.push_back(o);
   return PARSE_OK;
 }
 
 int Parser::addConstant(Atom const& c) {
+  Tuple& constants = currentFunction->constants;
+
+  // TODO(aappleby): Constant deduping.
+  /*
+  for (int i = 0; i < (int)constants.size(); i++) {
+    if (constants[i] == c) {
+      return i;
+    }
+  }
+  */
+
   int slot = currentFunction->constants.size();
   currentFunction->constants.push_back(c);
   return slot;
@@ -138,7 +154,7 @@ ParseStatus Parser::parseAtom() {
 
   // If the next token is a delimiter, that's the end of the atom.
   if (t.isDelimiter()) {
-    stack.push_back(temp);
+    stack.push(temp);
     return PARSE_OK;
   }
 
@@ -146,7 +162,7 @@ ParseStatus Parser::parseAtom() {
     // (a := c)
     parseExpression();
     temp.setValue(stack.back());
-    stack.pop_back();
+    stack.pop();
     return PARSE_OK;
   }
 
@@ -155,8 +171,7 @@ ParseStatus Parser::parseAtom() {
     assert(hasType);
     // (b = c)
     parseExpression();
-    temp.setValue(stack.back());
-    stack.pop_back();
+    temp.setValue(stack.pop());
     return PARSE_OK;
   }
 
@@ -177,8 +192,7 @@ ParseStatus Parser::parseAtom() {
 
     lex++;
     parseExpression();
-    temp.setValue(stack.back());
-    stack.pop_back();
+    temp.setValue(stack.pop());
     return PARSE_OK;
   }
 
@@ -233,15 +247,15 @@ ParseStatus Parser::parseExpression() {
     // TODO(aappleby): handle expression
     switch (t.type) {
       case TT_INTEGER:
-        stack.push_back(Atom::value(t.s64));
+        stack.push(Atom::value(t.s64));
         lex++;
         return PARSE_OK;
       case TT_FLOAT:
-        stack.push_back(Atom::value(t.f64));
+        stack.push(Atom::value(t.f64));
         lex++;
         return PARSE_OK;
       case TT_STRING:
-        stack.push_back(Atom::value(t.text));
+        stack.push(Atom::value(t.text));
         lex++;
         return PARSE_OK;
       case TT_RUNE:
@@ -298,7 +312,7 @@ Atom Parser::resolve(string& name) {
 //-----------------------------------------------------------------------------
 
 int Parser::allocateVariable(string& name) {
-  stack.push_back(Atom::name(name));
+  stack.push(Atom::name(name));
   return localTop++;
 }
 
@@ -322,15 +336,15 @@ ParseStatus Parser::evalLiteral() {
       return PARSE_OK;
 
     case TT_INTEGER:
-      stack.push_back(Atom::value(base.s64));
+      stack.push(Atom::value(base.s64));
       break;
     case TT_FLOAT:
-      stack.push_back(Atom::value(base.f64));
+      stack.push(Atom::value(base.f64));
       break;
     case TT_RUNE:
     case TT_STRING:
-      stack.push_back(Atom::value(base.text));
-      return PARSE_OK;
+      stack.push(Atom::value(base.text));
+      break;
 
     case TT_EOF:
     case TT_INVALID:
@@ -342,6 +356,11 @@ ParseStatus Parser::evalLiteral() {
       assert(false);
       return PARSE_ERROR;
   };
+
+  // Literal is on the stack. Emit the code that puts it there.
+  Atom& value = stack.back();
+  int cslot = addConstant(value);
+  emit(OC_LOADC, stack.size() - 1, cslot);
 
   return PARSE_OK;
 }
@@ -379,22 +398,17 @@ ParseStatus Parser::parseFunction() {
 
 ParseStatus Parser::emitEval() {
   while(op_stack.size()) {
-    Token op = op_stack.back();
-    op_stack.pop_back();
-
-    Atom a = stack.back();
-    stack.pop_back();
-    Atom b = stack.back();
-    stack.pop_back();
-
-    stack.push_back(Atom(10));
+    popOperator();
   }
   return PARSE_OK;
 }
 
 int getPriority(Token& op) {
+  //if (op == DL_LPAREN) return 10000;
+  //if (op == DL_RPAREN) return 10000;
+
   static TokenValue priorities[] = {
-    OP_MUL, OP_DIV, OP_MOD, OP_ADD, OP_SUB
+    OP_SUB, OP_ADD, OP_MOD, OP_DIV, OP_MUL
   };
   for (int i = 0; i < sizeof(priorities) / sizeof(priorities[0]); i++) {
     if (op == priorities[i]) return i;
@@ -406,25 +420,25 @@ ParseStatus Parser::pushOperator(Token& t) {
   if (t.isDelimiter()) {
     assert((t == DL_LPAREN) || (t == DL_RPAREN));
     if (t == DL_LPAREN) {
-      op_stack.push_back(t);
+      op_stack.push(t);
     } else {
       // Apply all pending operators until we hit the matching paren.
       while(op_stack.back() != DL_LPAREN) {
         popOperator();
       }
       // Remove the matching paren from the operator stack.
-      op_stack.pop_back();
+      op_stack.pop();
     }
     return PARSE_OK;
   }
 
   // check priority
   while(!op_stack.empty() &&
-        (getPriority(op_stack.back()) < getPriority(t))) {
+        (getPriority(op_stack.back()) >= getPriority(t))) {
     popOperator();
   }
 
-  op_stack.push_back(t);
+  op_stack.push(t);
 
   return PARSE_OK;
 }
@@ -442,12 +456,22 @@ ParseStatus Parser::pushSymbol(Token& t) {
 
 // Apply the operator on the top of the stack
 ParseStatus Parser::popOperator() {
-  if (op_stack.back() == OP_ADD) {
+  Token op = op_stack.pop();
+
+  Atom& a = stack[-2];
+  Atom& b = stack[-1];
+
+  if (op == OP_ADD) {
     emit(OC_ADD, -2, -1);
+  } else if (op == OP_SUB) {
+    emit(OC_SUB, -2, -1);
+  } else if (op == OP_MUL) {
+    emit(OC_MUL, -2, -1);
+  } else if (op == OP_DIV) {
+    emit(OC_DIV, -2, -1);
   } else {
     assert(false);
   }
-  op_stack.pop_back();
   return PARSE_OK;
 }
 
@@ -577,7 +601,13 @@ ParseStatus Parser::parseDecl() {
     local.type_ = value.type_;
   } else if (local.type_ != value.type_) {
       // Attempt to convert the item to the given type if necessary.
-    assert(false);
+    if (local.type_ == "int32" && value.type_ == "int64") {
+      value.type_ = "int32";
+    } else if (local.type_ == "float32" && value.type_ == "float64") {
+      value.type_ = "float32";
+    } else {
+      assert(false);
+    }
   }
 
   if (value.isSymbol()) {
@@ -591,7 +621,7 @@ ParseStatus Parser::parseDecl() {
     emit(OC_LOADC, slot, cslot);
   }
 
-  stack.pop_back();
+  stack.pop();
   return PARSE_OK;
 }
 
