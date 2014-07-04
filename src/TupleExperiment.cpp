@@ -30,7 +30,7 @@ int main(int /*argc*/, char* /*argv[]*/)
   m.run(gcd);
   */
 
-  std::ifstream ifs("examples\\gcd.h");
+  std::ifstream ifs("..\\examples\\gcd.h");
   std::string code((std::istreambuf_iterator<char>(ifs)),
                     std::istreambuf_iterator<char>());
 

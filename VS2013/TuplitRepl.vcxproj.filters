@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ZZZ_Notes">
+      <UniqueIdentifier>{88c242b3-51a8-4d93-89d9-dc43b6595d38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{6a555002-5bcd-4d98-9ad8-064175c32bca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lexer">
+      <UniqueIdentifier>{9c53b481-499b-4be4-b579-fa8b9ac5544b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Parser">
+      <UniqueIdentifier>{0d406539-01aa-4c22-918e-03cc656d98d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Base">
+      <UniqueIdentifier>{e8ee5697-692f-4db6-a6b4-06ab99c4f137}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="App">
+      <UniqueIdentifier>{7de875b6-5de5-4e6b-a945-9f340a00de00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Virtual Machine">
+      <UniqueIdentifier>{c187668c-49f3-4719-a940-fd2fc9ccd03a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Structures">
+      <UniqueIdentifier>{6f8b43d0-9135-46db-a3dc-6ca0b9b7fc8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ZZZ_Code">
+      <UniqueIdentifier>{a87be653-d73d-4c57-803c-8e1b11d3084e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\ExampleOps.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\generator_and_function_thoughts.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LuaGrammar.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ParseResult.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ToyLanguage.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ToyLanguage2.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Tuplit.bnf.h">
+      <Filter>ZZZ_Notes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Lexer.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Token.h">
+      <Filter>Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Parser.h">
+      <Filter>Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Atom.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\AtomPool.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Base.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Function.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\HashTable.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Stack.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\StringTable.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Type.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\TypeTable.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\TupleExperiment.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Machine.h">
+      <Filter>Virtual Machine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Opcodes.h">
+      <Filter>Virtual Machine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Table.h">
+      <Filter>Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Tuple.h">
+      <Filter>Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\gcd.h">
+      <Filter>ZZZ_Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\spectralnorm.h">
+      <Filter>ZZZ_Code</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\StringTable_test.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Lexer.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Token.cpp">
+      <Filter>Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Parser.cpp">
+      <Filter>Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Atom.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\AtomPool.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Base.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Function.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\HashTable.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Stack.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\StringTable.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Type.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\TypeTable.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\TupleExperiment.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Machine.cpp">
+      <Filter>Virtual Machine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Opcodes.cpp">
+      <Filter>Virtual Machine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Table.cpp">
+      <Filter>Structures</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Tuple.cpp">
+      <Filter>Structures</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
