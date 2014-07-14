@@ -5,6 +5,7 @@
 #include "HashTable.h"
 #include "Opcodes.h"
 #include "Machine.h"
+#include "Function.h"
 
 #include <algorithm>
 #include <string>
@@ -50,6 +51,17 @@ int main(int /*argc*/, char* /*argv[]*/)
   p.dump();
   printf("\n");
   printf("----------\n");
+  printf("\n");
+
+  // Run code.
+
+  /*
+  Machine m;
+  if (!p.currentFunction->code.empty()) {
+    printf("Running code...\n");
+    m.run(&p.currentFunction->code[0]);
+  }
+  */
 
   return 0;
 }

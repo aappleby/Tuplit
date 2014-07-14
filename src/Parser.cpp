@@ -1,10 +1,27 @@
 #include "Parser.h"
 #include "Function.h"
 
+int Print(Atom* args) {
+  printf("Hello From Tuplit\n");
+
+  Atom a("foo", "bar", Print);
+  a.dump();
+  printf("\n");
+
+  while (args) {
+    args->dump();
+    printf("\n");
+    if (args->isNil()) break;
+    args++;
+  }
+  return 0;
+}
+
 Parser::Parser() {
   stack.reserve(65536);
   stackBase = 0;
   localTop = 0;
+  delimiterDepth = 0;
 
   currentFunction = new Function();
 
@@ -17,6 +34,8 @@ Parser::Parser() {
   globals["uint32"] = Atom::make_type("uint32");
   globals["uint64"] = Atom::make_type("uint64");
   globals["string"] = Atom::make_type("string");
+
+  globals["print"] = Atom("print", "hook", Print);
 }
 
 bool isNativeType() {
@@ -91,34 +110,15 @@ int Parser::getPC() {
   return 0;
 }
 
-/*
-eight := 8;
-
-DECLARE
-  ATOM "eight" : ? = ?
-  ATOM ? : ? = 8
-*/
-
-// a : b = c
-// a : b
-// a     = c
-// a
-//     b = c
-//     b
-//         c
-
-
-// a : b
-// a
-//     b
-ParseStatus Parser::parseLhsAtom() {
-  return PARSE_OK;
-}
-
 //-----------------------------------------------------------------------------
 
 ParseStatus Parser::parseAtom() {
   Token t = lex[0];
+
+  if (t.isLiteral()) {
+    evalExpression();
+    return PARSE_OK;
+  }
 
   Atom temp;
 
@@ -128,7 +128,7 @@ ParseStatus Parser::parseAtom() {
 
   if (t.isIdentifier()) {
     // (a | (b
-    // Could be name, type, or function call.
+    // Could be name, type, function call, expression.
     // Don't bother handling function call for now.
 
     // See if the identifier matches a known type.
@@ -143,8 +143,6 @@ ParseStatus Parser::parseAtom() {
       temp.name_ = t.text;
       hasName = true;
     }
-  } else if (t.isLiteral()) {
-    // (c)
   }
 
   // First piece done.
@@ -416,21 +414,19 @@ int getPriority(Token& op) {
   return -1;
 }
 
-ParseStatus Parser::pushOperator(Token& t) {
-  if (t.isDelimiter()) {
-    assert((t == DL_LPAREN) || (t == DL_RPAREN));
-    if (t == DL_LPAREN) {
-      op_stack.push(t);
-    } else {
-      // Apply all pending operators until we hit the matching paren.
-      while(op_stack.back() != DL_LPAREN) {
-        popOperator();
-      }
-      // Remove the matching paren from the operator stack.
-      op_stack.pop();
-    }
-    return PARSE_OK;
+ParseStatus Parser::pushSymbol(Token& t) {
+  if (t.isLiteral()) {
+    return evalLiteral();
+  } else {
+    assert(false);
   }
+  // resolve symbol
+  // push value on stack
+  return PARSE_OK;
+}
+
+ParseStatus Parser::pushOperator(Token& t) {
+  assert(t.isOperator());
 
   // check priority
   while(!op_stack.empty() &&
@@ -440,17 +436,6 @@ ParseStatus Parser::pushOperator(Token& t) {
 
   op_stack.push(t);
 
-  return PARSE_OK;
-}
-
-ParseStatus Parser::pushSymbol(Token& t) {
-  if (t.isLiteral()) {
-    return evalLiteral();
-  } else {
-    assert(false);
-  }
-  // resolve symbol
-  // push value on stack
   return PARSE_OK;
 }
 
@@ -475,25 +460,64 @@ ParseStatus Parser::popOperator() {
   return PARSE_OK;
 }
 
+ParseStatus Parser::pushDelimiter(Token& t) {
+  
+  if (t == DL_LPAREN) {
+    op_stack.push(t);
+    delimiterDepth++;
+    return PARSE_OK;
+  }
+  
+  if (t == DL_RPAREN) {
+    popDelimiter(DL_LPAREN);
+    delimiterDepth--;
+    return PARSE_OK;
+  }
+
+  assert(false);
+  return PARSE_OK;
+}
+
+ParseStatus Parser::popDelimiter(TokenValue t) {
+  // Apply all pending operators until we hit the matching paren.
+  while (op_stack.back() != t) {
+    popOperator();
+  }
+
+  // Remove the matching paren from the operator stack.
+  op_stack.pop();
+  return PARSE_OK;
+}
+
 //-----------------------------------------------------------------------------
 // function(), literal;, (tuple), call(), expression
 
 ParseStatus Parser::evalExpression() {
-  while (!lex[0].isDelimiter(DL_SEMICOLON)) {
+  ParseStatus error = PARSE_OK;
+  while (error == PARSE_OK) {
     Token t = lex[0];
 
-    if (t.isLiteral()) {
-      ParseStatus error = pushSymbol(t);
-      if (error) return error;
-    } else if (t.isOperator() || t.isDelimiter()) {
-      ParseStatus error = pushOperator(t);
-      if (error) return error;
+    // Check for terminators if we're not in a nested expression.
+    if (t.isDelimiter()) {
+      if (t.isTerminator() && delimiterDepth == 0) {
+        break;
+      }
+      error = pushDelimiter(t);
     }
-    lex++;
+
+    if (t.isLiteral()) {
+      error = pushSymbol(t);
+    }
+    
+    if (t.isOperator()) {
+      error = pushOperator(t);
+    }
+    
+
+    if (!error) lex++;
     continue;
   }
-  // Skip the semicolon.
-  lex++;
+  if (error) return error;
 
   return emitEval();
 
@@ -594,6 +618,7 @@ ParseStatus Parser::parseDecl() {
 
   // Evaluate the right hand side.
   evalExpression();
+  skipExpected(TT_DELIMITER, DL_SEMICOLON);
   Atom& value = stack.back();
 
   // Local type is inferred from the expression.
@@ -616,7 +641,13 @@ ParseStatus Parser::parseDecl() {
     emit(OC_MOVV, slot, stack.size() - 1);
     emit(OC_POP, 1);
   } else {
+    // The result of the right-hand expression is a constant.
+    // Store it in the constant table and emit a load instruction to place it
+    // in the destination register.
+    local.ptype_ = value.ptype_;
+    local.value_.blob = value.value_.blob;
     value.setName(name.text);
+    assert(local == value);
     int cslot = addConstant(value);
     emit(OC_LOADC, slot, cslot);
   }
@@ -626,23 +657,58 @@ ParseStatus Parser::parseDecl() {
 }
 
 //-----------------------------------------------------------------------------
+// Parse a list of atoms and push them onto the stack.
+
+ParseStatus Parser::parseAtomList() {
+  skipExpected(TT_DELIMITER, DL_LPAREN);
+
+  while (!lex[0].isDelimiter(DL_RPAREN)) {
+    parseAtom();
+    // Every atom should be followed by a delimiter.
+    if (lex[0].type != TT_DELIMITER) {
+      assert(false);
+      return PARSE_ERROR;
+    }
+    skipOptional(TT_DELIMITER, DL_COMMA);
+  }
+
+  skipExpected(TT_DELIMITER, DL_RPAREN);
+  return PARSE_OK;
+}
+
+//-----------------------------------------------------------------------------
 // "x(...);" or "x(...) {};"
 
 // TODO - add support for non-delimited args
 
 ParseStatus Parser::parseCall() {
-  Token& name = lex[0];
-  Token& lparen = lex[1];
+  assert(lex[0].isIdentifier());
+  assert(lex[1].isDelimiter(DL_LPAREN));
 
-  assert(name.type == TT_IDENTIFIER);
-  assert(lparen.type == TT_DELIMITER && lparen.value == DL_LPAREN);
-
-  Atom f = resolve(name.text);
-  if (f.isNil()) {
+  Atom func = resolve(lex[0].text);
+  if (func.isNil()) {
     // Couldn't resolve function call name.
     return PARSE_ERROR;
   }
+  lex++;
 
+  // Save the stack top.
+  Atom* args = stack.empty() ? NULL : &stack.back();
+
+  // Parse argument list, push arguments onto the stack.
+  ParseStatus error = parseAtomList();
+  if (error) return error;
+
+  if (args == NULL && !stack.empty()) args = &stack[0];
+
+  // Invoke function
+  if (func.isHook()) {
+    // Should emit code, but interpreting for now...
+    stack.push(Atom::nil);
+    func.getHook()(args);
+  }
+
+  // Done.
   return PARSE_OK;
 }
 
@@ -673,6 +739,12 @@ ParseStatus Parser::parseCallOrDecl() {
 
 ParseStatus Parser::parseStatement() {
   Token t = lex[0];
+  
+  if (t.isDelimiter(DL_SEMICOLON)) {
+    lex++;
+    return PARSE_OK;
+  }
+
   if (t.isKeyword()) {
     switch(t.value) {
       case KW_WHILE:

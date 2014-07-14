@@ -177,8 +177,8 @@ int Lexer::lexNumber() {
   }
 
   // Scan digit & decimal block.
-  const char* numberStart = cursor;
-  const char* decimal = skipN(numberStart, digits);
+  const char* numberStart2 = cursor;
+  const char* decimal = skipN(numberStart2, digits);
   const char* fractStart = skip1(decimal, '.');
   const char* numberEnd = skipN(fractStart, digits);
 
@@ -195,21 +195,21 @@ int Lexer::lexNumber() {
     int exp = static_cast<int>(toInt(expStart, expEnd, base));
     if (*expSign == '-') exp = -exp;
 
-    double value = toFloat(numberStart, decimal, numberEnd, base);
+    double value = toFloat(numberStart2, decimal, numberEnd, base);
     value *= pow(base, static_cast<double>(exp));
-    addToken(Token(TT_FLOAT, value, numberStart, expEnd));
+    addToken(Token(TT_FLOAT, value, numberStart2, expEnd));
     cursor = expEnd;
     return LEX_OK;
   } else if (*decimal == '.') {
     // Floating point constant without exponent.
-    double value = toFloat(numberStart, decimal, numberEnd, base);
-    addToken(Token(TT_FLOAT, value, numberStart, numberEnd));
+    double value = toFloat(numberStart2, decimal, numberEnd, base);
+    addToken(Token(TT_FLOAT, value, numberStart2, numberEnd));
     cursor = numberEnd;
     return LEX_OK;
   } else {
     // Integer constant.
-    uint64_t value = toInt(numberStart, numberEnd, base);
-    addToken(Token(TT_INTEGER, value, numberStart, numberEnd));
+    uint64_t value = toInt(numberStart2, numberEnd, base);
+    addToken(Token(TT_INTEGER, value, numberStart2, numberEnd));
     cursor = numberEnd;
     return LEX_OK;
   }

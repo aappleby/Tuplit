@@ -263,6 +263,17 @@ struct Token {
     if (which > 0 && value != which) return false;
     return true;
   }
+  
+  // Returns true if this is a delimiter that can terminate an expression.
+  bool isTerminator() {
+    if (type != TT_DELIMITER) return false;
+    if (value == DL_COMMA) return true;
+    if (value == DL_RBRACE) return true;
+    if (value == DL_RSQUARE) return true;
+    if (value == DL_RPAREN) return true;
+    if (value == DL_SEMICOLON) return true;
+    return false;
+  }
 
   bool isIdentifier() {
     return type == TT_IDENTIFIER;

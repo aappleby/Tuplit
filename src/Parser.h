@@ -106,7 +106,7 @@ public:
     return std::vector<Atom>::operator[](index);
   }
 
-  void push(Atom& a) {
+  void push(const Atom& a) {
     push_back(a);
   }
 
@@ -151,7 +151,7 @@ public:
 
   Lexer lex;
 
-private:
+//private:
 
   // Given a name, finds the atom in scope (local or global) that matches it.
   // Returns the nil atom if not found.
@@ -175,14 +175,20 @@ private:
   ParseStatus evalLiteral();
   ParseStatus evalExpression();
 
+  // Push / pop things from the eval stack.
   ParseStatus pushSymbol(Token& t);
+
   ParseStatus pushOperator(Token& t);
   ParseStatus popOperator();
+
+  ParseStatus pushDelimiter(Token& t);
+  ParseStatus popDelimiter(TokenValue t);
 
   // Parse methods consume tokens and place code pieces on the stack.
 
   ParseStatus parseAtom();
   ParseStatus parseTuple();
+  ParseStatus parseAtomList();
 
   ParseStatus parseFunction();
 
@@ -222,6 +228,8 @@ private:
 
   //std::vector<ParseNode*> stack;
   //std::vector<ParseNode*> expressions;
+
+  int delimiterDepth;
 
   AtomMap globals;
 };

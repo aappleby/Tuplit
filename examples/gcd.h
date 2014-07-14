@@ -1,4 +1,7 @@
-foo := 10;
+a : int32 = 1 + 1;
+stoplexing;
+print(a + 1);
+
 sum : int32 = ((1 + 1) * (4 + 87));
 stoplexing
 

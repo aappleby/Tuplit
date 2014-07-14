@@ -9,6 +9,8 @@ class Atom;
 class Function;
 class Type;
 
+typedef int (*Hook)(Atom* args);
+
 // The actual machine representation of the data stored in the atom, independent
 // of its declared type.
 enum PhysicalType {
@@ -23,6 +25,7 @@ enum PhysicalType {
   PT_BLOB,
   PT_VOID,
   PT_FUNC,
+  PT_HOOK,
 };
 
 union ValueStuff {
@@ -34,6 +37,7 @@ union ValueStuff {
   uint8_t*  blob;
   Function* func;
   Type*     type;
+  Hook      hook;
 };
 
 //------------------------------------------------------------------------------
@@ -66,6 +70,16 @@ public:
     return *this;
   }
 
+  bool operator == (const Atom& a) const {
+    if (name_ != a.name_) return false;
+    if (type_ != a.type_) return false;
+    if (ptype_ != a.ptype_) return false;
+    if (value_.blob != a.value_.blob) return false;
+    // ignore text, as that's just the chunk of source code that generated the
+    // atom.
+    return true;
+  }
+
   //----------
 
   Atom(const string& name, const string& type)
@@ -88,6 +102,9 @@ public:
 
   Atom(const string& name, const string& type, const string& text)
   : name_(name), type_(type), ptype_(PT_TEXT), text_(text) {}
+
+  Atom(const string& name, const string& type, Hook hook)
+  : name_(name), type_(type), ptype_(PT_HOOK) { value_.hook = hook; }
 
   //----------
   // Extract name/type/value of atoms.
@@ -179,6 +196,10 @@ public:
     return ptype_ == PT_TYPE;
   }
 
+  bool isHook() const {
+    return ptype_ == PT_HOOK;
+  }
+
   bool isSymbol() const {
     return name_ == "<symbol>";
   }
@@ -262,9 +283,21 @@ public:
     value_.s64 = v;
   }
 
-  int getInt() {
+  int getInt() const {
     assert(ptype_ == PT_INT);
     return static_cast<int>(value_.s64);
+  }
+
+  //-----------
+
+  void setHook(Hook hook) {
+    assert(ptype_ == PT_HOOK);
+    value_.hook = hook;
+  }
+
+  Hook getHook() const {
+    assert(ptype_ == PT_HOOK);
+    return value_.hook;
   }
 
   //-----------

@@ -88,14 +88,15 @@ void Machine::run(Instruction* code) {
       break;
 
     case OC_IMOV:
-      stacks[pc->ra >> 8][static_cast<int8_t>((pc->ra + pc->rb) & 0xFF)] = stacks[pc->rc >> 8][static_cast<int8_t>((pc->rc + pc->rd) & 0xFF)];
+      stacks[pc->ra >> 8][static_cast<int8_t>((pc->ra + pc->rb) & 0xFF)] =
+        stacks[pc->rc >> 8][static_cast<int8_t>((pc->rc + pc->rd) & 0xFF)];
       break;
 
     case OC_SWAP:
       {
-        Atom temp = ra;
+        Atom t = ra;
         ra = rb;
-        rb = temp;
+        rb = t;
       }
       break;
 
