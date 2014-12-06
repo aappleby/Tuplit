@@ -108,6 +108,18 @@
     <ClInclude Include="..\examples\spectralnorm.h">
       <Filter>ZZZ_Code</Filter>
     </ClInclude>
+    <ClInclude Include="..\examples\mandelbrot.tick">
+      <Filter>ZZZ_Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\nbody.tick.h">
+      <Filter>ZZZ_Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\examples\fannkuch.tick.h">
+      <Filter>ZZZ_Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Module.h">
+      <Filter>Structures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\StringTable_test.cpp">
@@ -164,5 +176,13 @@
     <ClCompile Include="..\src\Tuple.cpp">
       <Filter>Structures</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Module.cpp">
+      <Filter>Structures</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\examples\macros.tick">
+      <Filter>ZZZ_Code</Filter>
+    </None>
   </ItemGroup>
 </Project>

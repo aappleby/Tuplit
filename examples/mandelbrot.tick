@@ -1,0 +1,185 @@
+#include<stdio.h>
+
+int main(int argc, char **argv) {
+  int w, h, bit_num = 0;
+  char byte_acc = 0;
+  int i, iter = 50;
+  double x, y, limit = 2.0;
+  double Zr, Zi, Cr, Ci, Tr, Ti;
+
+  w = h = atoi(argv[1]);
+
+  printf("P4\n%d %d\n", w, h);
+
+  for (y = 0; y<h; ++y) {
+    for (x = 0; x<w; ++x) {
+      Zr = Zi = Tr = Ti = 0.0;
+      Cr = (2.0*x / w - 1.5); Ci = (2.0*y / h - 1.0);
+
+      for (i = 0; i<iter && (Tr + Ti <= limit*limit); ++i) {
+        Zi = 2.0*Zr*Zi + Ci;
+        Zr = Tr - Ti + Cr;
+        Tr = Zr * Zr;
+        Ti = Zi * Zi;
+      }
+
+      byte_acc <<= 1;
+      if (Tr + Ti <= limit*limit) byte_acc |= 0x01;
+
+      ++bit_num;
+
+      if (bit_num == 8) {
+        putc(byte_acc, stdout);
+        byte_acc = 0;
+        bit_num = 0;
+      } else if (x == w - 1) {
+        byte_acc <<= (8 - w % 8);
+        putc(byte_acc, stdout);
+        byte_acc = 0;
+        bit_num = 0;
+      }
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+
+
+mandelbrot = {
+  x, y : float;
+  limit : int;
+
+  x' = (x * x) - (y * y) + cx;
+  y' = 2 * x * y + cy;
+
+  i = 0;
+  i' = i + 1;
+  
+  result = i;
+  eval = while (x * x + y * y < 4) && (i < limit);
+}
+
+
+line = {
+  x : int;
+  y : int;
+  w : int;
+  h : int;
+
+  x' = x + 1;
+  bit = 0, bit' = (bit + 1) % 8;
+  
+  Cr = (2.0*x / w - 1.5);
+  Ci = (2.0*y / h - 1.0);
+  color = mandelbrot(Cr, Ci, 100) < 100 ? 1 : 0;
+
+  temp = 0;
+  pixel = temp | (color << bit);
+  temp' = (bit == 7) ? 0 : pixel;
+
+  /*
+  if (bit == 7) || (x' == w) {
+    putc(pixel, stdout);
+  }
+  */
+  _ = (bit == 7) || (x' == w) ? putc(pixel, stdout);
+
+  eval = while x < w;
+}
+
+image = {
+  w : int;
+  h : int;
+  y = 0;
+  y' = y + 1;
+
+  line(0, y, w, h);
+
+  eval while y < h;
+}
+
+main = {
+  size : int = atoi(argv[1]);
+  printf("P4\n%d %d\n", w, h);
+  image(size, size);
+}
+
+//------------------------------------------------------------------------------
+
+
+
+gcd: = function(a : int, b : int) : (a : int) {
+  result = loop(a, b) {
+    next = b ? (b, a % b) : break;
+  }
+}
+
+gcd = {
+  a, b : int;
+  a' = b
+  b' = a % b
+  result = a;
+  eval = while b;
+}
+
+
+
+
+
+> x = {
+  a := 2
+  b := 5
+  a' = b * 3
+  b' = a / 2
+};
+> print x
+{
+  a = 2,
+  b = 5,
+}
+> print `x
+{
+  a := 2
+  b := 5
+  a' = b * 3
+  b' = a / 2
+}
+> print x'
+{
+  a = 15,
+  b = 1,
+}
+> print x''
+{
+  a = 3,
+  b = 7.5
+}
+
+blah = {
+  x : number;
+  x' = x * x * x + x;
+}
+
+> print blah(10);
+1010
+
+> y = blah : { x = 10 };
+> print `y
+{
+  x : number = 10;
+  x' = x * x * x + x;
+}
+
+
+
+x = {
+  print "hello world\n";
+};
+> print x
+hello world
+{}
+> eval(x)
+hello world
+> eval(eval(x));
+hello world

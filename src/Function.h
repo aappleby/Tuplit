@@ -7,6 +7,9 @@
 
 class Function {
 public:
+  Function() {
+  };
+
   // The name of the function.
   std::string name;
 

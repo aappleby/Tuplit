@@ -1,0 +1,161 @@
+prime = {
+  x : int;
+  factor = 1;
+  factor' = factor + 1;
+  result = (x % factor) ? true : false;
+  eval = while (factor < isqrt(x)) && result;
+}
+
+primes = {
+  p = 1;
+  p' = p + 2;
+  eval = until prime(p);
+}
+
+// Print primes less than 100
+main = {
+  p = primes;
+  _ = print(p);
+  eval = while p < 100;
+}
+
+//------------------------------------------------------------------------------
+
+
+// Print primes less than 100
+main = {
+  prime = 2, prime' = {
+    result = prime + 1, result' = result + 1;
+    break = {
+      factor = 2, factor' = factor + 1;
+      result = (result % factor) ? true : false;
+      break = (factor' > isqrt(p)) || !result;
+    };
+  }
+  end = (p >= 100);
+  if (!end) print(p);
+}
+
+// Print primes less than 100 using generator
+main = {
+  primes = {
+    result = 2, result' = result + 1;
+    break = {
+      factor = 2, factor' = factor + 1;
+      result = (result % factor) ? true : false;
+      break = (factor' > isqrt(p)) || !result;
+    };
+  }
+  end = (p >= 100);
+  if (!end) print(p);
+}
+
+
+void main() {
+  int p = 1;
+  for (int i = 2; i < 100; i++) {
+    bool prime = true;
+    for (int j = 2; j < sqrt(i); j++) {
+      if (i % j == 0) prime = false;
+    }
+    if (prime) printf("%d\n");
+  }
+}
+
+//------------------------------------------------------------------------------
+// Is end set on the last element, or one past the last element?
+// I think it should be on the last element...
+
+factorial = {
+  x = 1;
+  x' = x * (tick + 1);
+}
+
+primes = {
+  cursor = 2, cursor' = cursor + 1;
+  limit = sqrt(cursor);
+
+  // evaluated and spliced into parent scope
+  @eval {
+    factor = 2, factor' = factor + 1;
+    composite = (cursor % factor) == 0;
+    end = composite | (factor == limit);
+  };
+
+  result = cursor;
+  skip = composite;
+}
+
+// But what about here, where we want to terminate the sequence _after_
+// computing the next prime?
+
+doprimes = {
+  var : name;
+  b : {var : int};
+  max : int;
+
+  p = primes;
+  end = p > max;
+
+  result = end ? nil : b(var = p);
+}
+
+main = {
+  b = {
+    p : int;
+    print(p);
+  };
+  doprimes('p, b, 100);
+  break;
+}
+
+//------------------------------------------------------------------------------
+
+for (int i = 0; i < 100; i++) {
+  printf("%d\n", i);
+}
+
+// Should the 'end' condition be 99 or 100 here?
+// I think we shouldn't partially evaluate ticks to determine if we stop...
+<
+  i = 0; i' = i + 1;
+  printf("%d\n", i);
+  end = i == 99;
+>
+
+//------------------------------------------------------------------------------
+
+doubler = {
+  even = true, even' = !even;
+  source : {int}, source' = even ? source : source';
+  result : int = source;
+}
+
+//------------------------------------------------------------------------------
+
+averager = {
+  even = true, even' = !even;
+  source : {int}, source' = source'';
+  result : int = source + source' / 2;
+}
+
+//------------------------------------------------------------------------------
+
+(defun primep (number)
+  (when (> number 1)
+    (loop for fac from 2 to (isqrt number) never (zerop (mod number fac)))))
+
+
+
+(defmacro do-primes ((var start end) &body body)
+  `(do ((,var (next-prime ,start) (next-prime (1+ ,var))))
+       ((> ,var ,end))
+     ,@body))
+
+
+(do-primes (p 0 19)
+  (format t "~d " p))
+
+
+//------------------------------------------------------------------------------
+

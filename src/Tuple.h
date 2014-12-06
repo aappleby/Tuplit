@@ -48,6 +48,10 @@ private:
 
 class Tuple : public std::vector<Atom> {
 public:
+  Tuple() {
+  };
+
+  Tuple(std::initializer_list<Atom> x);
 
   void dump();
 };

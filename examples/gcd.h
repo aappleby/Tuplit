@@ -1,8 +1,4 @@
-a : int32 = 1 + 1;
-stoplexing;
-print(a + 1);
-
-sum : int32 = ((1 + 1) * (4 + 87));
+print("hello world");
 stoplexing
 
 implied_int := 3;
@@ -10,8 +6,16 @@ implied_float := 4.1;
 implied_string := "five";
 two : int32 = 2;
 pi : float32 = 3.1415926535897932384626433832795028814971;
-cheese : string = "delicious";
+cheese: string = "delicious";
 stoplexing
+
+sum : int32 = ((1 + 1) * (4 + 87));
+stoplexing
+
+a : int32 = 1 + 1;
+stoplexing;
+print(a + 1);
+
 
 stoplexing
 

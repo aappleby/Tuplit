@@ -91,7 +91,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\examples\fannkuch.tick.h" />
     <ClInclude Include="..\examples\gcd.h" />
+    <ClInclude Include="..\examples\mandelbrot.tick" />
+    <ClInclude Include="..\examples\nbody.tick.h" />
     <ClInclude Include="..\examples\spectralnorm.h" />
     <ClInclude Include="..\generator_and_function_thoughts.h" />
     <ClInclude Include="..\LuaGrammar.h" />
@@ -103,6 +106,7 @@
     <ClInclude Include="..\src\HashTable.h" />
     <ClInclude Include="..\src\Lexer.h" />
     <ClInclude Include="..\src\Machine.h" />
+    <ClInclude Include="..\src\Module.h" />
     <ClInclude Include="..\src\Opcodes.h" />
     <ClInclude Include="..\src\Parser.h" />
     <ClInclude Include="..\src\ParseResult.h" />
@@ -126,6 +130,7 @@
     <ClCompile Include="..\src\HashTable.cpp" />
     <ClCompile Include="..\src\Lexer.cpp" />
     <ClCompile Include="..\src\Machine.cpp" />
+    <ClCompile Include="..\src\Module.cpp" />
     <ClCompile Include="..\src\Opcodes.cpp" />
     <ClCompile Include="..\src\Parser.cpp" />
     <ClCompile Include="..\src\Stack.cpp" />
@@ -137,6 +142,9 @@
     <ClCompile Include="..\src\TupleExperiment.cpp" />
     <ClCompile Include="..\src\Type.cpp" />
     <ClCompile Include="..\src\TypeTable.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\examples\macros.tick" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

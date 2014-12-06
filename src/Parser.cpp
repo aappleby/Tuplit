@@ -4,9 +4,9 @@
 int Print(Atom* args) {
   printf("Hello From Tuplit\n");
 
-  Atom a("foo", "bar", Print);
-  a.dump();
-  printf("\n");
+  //Atom a("foo", "bar", Print);
+  //a.dump();
+  //printf("\n");
 
   while (args) {
     args->dump();
